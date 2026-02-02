@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.env
+
+# dbt
+target/
+dbt_packages/
+logs/
+profiles.yml
+
+# Node/React
+node_modules/
+build/
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Secrets
+*.key
+*.pem
