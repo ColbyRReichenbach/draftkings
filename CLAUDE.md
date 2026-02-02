@@ -1,86 +1,154 @@
 # DK SENTINEL: Responsible Gaming Intelligence System
 
-## Project Overview
-
 **Target Role**: Analyst II, Responsible Gaming Analytics at DraftKings (Job ID: jr13280)
 
-**Purpose**: Portfolio project demonstrating data engineering, behavioral analytics, and AI integration capabilities specifically aligned with DraftKings' 2026 tech stack and responsible gaming mission.
+**Project Type**: Portfolio project demonstrating data engineering, behavioral analytics, and AI integration
 
-**Core Problem**: 
-DraftKings processes millions of daily wagers. Human analysts cannot manually review every high-risk behavioral pattern. This project demonstrates an AI-powered intervention triage system that reduces analyst review queue by 80% while increasing intervention accuracy by 40%.
+---
 
-## Technical Architecture
+## Quick Context
 
-### Data Stack
-- **Warehouse**: Snowflake (DraftKings' primary platform)
-- **Transformation**: dbt Core 1.7+ (analytics engineering)
-- **Processing**: Python 3.11 (PySpark + Pandas)
-- **AI Layer**: Anthropic Claude API (semantic auditing)
-- **Frontend**: React 18 + TypeScript + Tailwind CSS
-- **Orchestration**: Snowflake Tasks + dbt Cloud
+**Problem**: DraftKings processes millions of daily wagers. Analysts can't manually review every high-risk pattern.
 
-### Data Flow
-```
-Raw Bets (Snowflake) 
-  → dbt Staging (views with data contracts)
-  → dbt Intermediate (incremental - behavioral features)
-  → dbt Marts (tables - risk scores)
-  → Python AI Service (semantic auditing)
-  → React Dashboard (analyst interface)
-  → Audit Trail (compliance)
-```
+**Solution**: AI-powered triage system reducing analyst queue by 80% while increasing intervention accuracy by 40%.
+
+**Tech Stack**: Snowflake + dbt Core + Python (FastAPI) + React + Claude API
+
+---
 
 ## Code Standards
 
 ### SQL/dbt
-- CTEs over subqueries for readability
-- Staging: views | Intermediate: incremental | Marts: tables
-- Data contracts enforced on ALL staging models
-- Every model needs: description, column docs, tests
+- **Materialization**: Staging = views | Intermediate = incremental | Marts = tables
+- **Data Contracts**: ALWAYS enforce on staging models (`contract: {enforced: true}`)
+- **Testing**: Minimum 1 test per model, target 90% column coverage
+- **Incremental Strategy**: MUST include time predicate in `{% if is_incremental() %}` block
+- **Documentation**: Every model needs description + column docs + business logic in meta tags
 
 ### Python
-- Type hints required on all functions
-- Google-style docstrings
-- Black formatter (100-char line length)
-- Pydantic for request/response validation
-- FastAPI for HTTP services
+- **Type Hints**: Required on ALL function signatures
+- **Docstrings**: Google-style format
+- **Formatting**: Black with 100-char line length
+- **Validation**: Pydantic models for all API requests/responses
+- **Framework**: FastAPI for HTTP services
 
 ### React/TypeScript
-- Functional components + hooks only
-- TypeScript strict mode
-- Tailwind utility classes
-- React Query for data fetching
-- DraftKings colors: #53B848, #000000, #F3701B
+- **Components**: Functional with hooks only (no class components)
+- **Type Safety**: TypeScript strict mode enabled
+- **Styling**: Tailwind utility classes (minimize custom CSS)
+- **Data Fetching**: React Query for server state
+- **State Management**: Zustand for global client state
+- **DraftKings Colors**: `#53B848` (green), `#000000` (black), `#F3701B` (orange)
 
-## Domain Context
+---
 
-### DraftKings 2026 Context
-- **Gamalyze Integration** (Jan 2026): Mindway AI neuro-marker assessments
-- **Chief RG Officer**: Lori Kalani (appointed April 2024)
-- **LTV Strategy**: $1,500-$1,800 per player over 2-3 years
+## Domain Knowledge
 
-### Risk Score Weights (v1.0)
+### Risk Score Weights (v1.0 - Subject to Active Learning)
 ```python
 COMPOSITE_RISK_WEIGHTS = {
-    'loss_chase_score': 0.30,      # Strongest predictor
-    'bet_escalation_score': 0.25,  # Second strongest
+    'loss_chase_score': 0.30,      # Strongest predictor (68% of self-excluded)
+    'bet_escalation_score': 0.25,  # r=0.72 with Gamalyze sensitivity to loss
     'market_drift_score': 0.15,    # Moderate signal
-    'temporal_risk_score': 0.10,   # High variance
+    'temporal_risk_score': 0.10,   # High variance (shift workers confound)
     'gamalyze_risk_score': 0.20    # External validation
 }
 ```
 
-### Compliance Requirements
-- **HITL Mandate**: Every AI flag requires analyst sign-off
-- **Customer Tone**: Supportive, non-judgmental, emphasize autonomy
-- **State Regulations**: MA (205 CMR 238.04), NJ, PA different thresholds
-- **Data Retention**: 7-year audit trail
+### Critical Thresholds
 
-## File Conventions
-- dbt: `{layer}_{entity}.sql` (e.g., `stg_bet_logs.sql`)
-- Python: `snake_case.py`
-- React: `PascalCase.tsx`
-- Tests: `test_{module}.py` or `{Component}.test.tsx`
+**Loss-Chasing Detection**:
+- Bet After Loss Ratio: <0.40 normal, 0.60-0.75 high, >0.75 critical
+- Bet Escalation Ratio: <1.2 normal, 1.5-2.0 high, >2.0 critical
+
+**Market Drift**:
+- Horizontal: >3x baseline sport diversity = risky
+- Vertical: >50% market tier drop (1.0 → 0.5) = risky  
+- Temporal: 2-6 AM betting when normally 7-9 PM = risky
+
+### Compliance Requirements
+
+**Human-in-the-Loop (HITL)**:
+- Every AI flag REQUIRES analyst sign-off
+- Audit trail MUST capture: analyst_id, timestamp, decision, rationale
+
+**Customer Communication**:
+- Tone: Supportive, non-judgmental (never "irresponsible", "addicted")
+- Required: Link to RG Center (rg.draftkings.com)
+- Required: Autonomy language ("you can choose" not "you must")
+- Prohibited: Specific dollar amounts, medical language, threats
+
+**State-Specific**:
+- MA (205 CMR 238.04): Flag bets >10x rolling avg
+- NJ: Mandatory timeout after 3+ flags in 30 days
+- PA: Referral required for 3+ self-exclusion reversals in 6 months
+
+---
+
+## File Naming Conventions
+
+- **dbt**: `{layer}_{entity}.sql` → `stg_bet_logs.sql`, `int_loss_chasing_indicators.sql`
+- **Python**: `snake_case.py`
+- **React**: `PascalCase.tsx`
+- **Tests**: `test_{module}.py`, `{Component}.test.tsx`
+
+---
+
+## Development Workflow
+
+### 1. Start Every Complex Task in Plan Mode
+Press **Shift+Tab twice** to enter Plan Mode before implementing:
+- New dbt models with complex logic
+- AI integration features
+- Multi-file refactoring
+- Any feature you don't fully understand
+
+**Why**: Prevents "ready, fire, aim". Forces structured thinking. Reduces debugging cycles by 60-80%.
+
+### 2. Use Voice Dictation for Detailed Prompts
+Press **Fn+Fn** (Mac) to speak prompts instead of typing:
+- 3x faster than typing
+- More detailed requirements
+- Fewer typos = better responses
+
+### 3. Delegate to Subagents
+Use `@agent-name` or "use subagents" to offload:
+- Testing → `@data-quality-tester`
+- Compliance review → `@compliance-validator`
+- Code review → `@dbt-architect`
+
+**Why**: Keeps main context clean and focused.
+
+### 4. Use Skills for Repetitive Workflows
+Type `/skill-name` for common tasks:
+- `/validate-pipeline` - Full test suite + validation
+- `/dbt-docs` - Generate and serve documentation
+- `/commit-changes` - Smart git commit with context
+
+---
+
+## Self-Correction Protocol
+
+**CRITICAL**: After EVERY correction from me, you MUST propose a CLAUDE.md update.
+
+**Template**:
+> "I've updated my understanding. To prevent this mistake, I should add to CLAUDE.md:
+> 
+> ```
+> [Specific rule based on correction]
+> ```
+> 
+> Should I update CLAUDE.md with this rule?"
+
+**Examples of corrections that trigger updates**:
+- "That SQL syntax is wrong for Snowflake" → Add Snowflake-specific pattern
+- "Don't use SELECT * in production" → Add to code standards  
+- "Customer nudges must include RG link" → Add to compliance checklist
+- "Risk weights must sum to 1.0" → Add to business logic validation
+
+This creates a **self-improving feedback loop** where the project gets smarter over time.
+
+---
 
 ## Common Commands
 ```bash
@@ -98,47 +166,31 @@ npm run dev
 npm test
 ```
 
-## Development Philosophy
-
-### Progressive Implementation
-1. Human designs (business logic, architecture)
-2. Claude Code implements (SQL, Python, React)
-3. Human validates (logic accuracy, not syntax)
-4. Iterate until correct
-
-### Context Management
-- Don't load full spec - use skills for domain knowledge
-- Reference context files as needed
-- Invoke specific agents for specialized tasks
-- Use workflows for multi-step procedures
+---
 
 ## Success Metrics
-- Code Quality: All tests pass, >80% coverage
-- Performance: Risk scores for 10K players in <5 min
-- Compliance: 100% audit trail coverage
-- Documentation: Every decision has rationale
 
-## Getting Started
-
-**Domain Knowledge**: `.claude/skills/`
-- dbt_transformations.md
-- behavioral_analytics.md
-- llm_integration.md
-- compliance_validation.md
-- react_dashboard.md
-
-**Procedures**: `.claude/workflows/`
-- create_new_risk_feature.md
-- deploy_dbt_model.md
-- validate_pipeline.md
-
-**Specialized Tasks**: `.claude/agents/`
-- @dbt_architect
-- @compliance_validator
-- @data_quality_engineer
-- @python_backend_dev
-- @react_ui_developer
+- **Code Quality**: All tests pass, >80% Python coverage, >90% dbt column coverage
+- **Performance**: Risk scores for 10K players in <5 min
+- **Compliance**: 100% audit trail coverage, all nudges validated
+- **Documentation**: Every decision has documented rationale
 
 ---
 
-**This configuration enables systematic AI-augmented development while maintaining clear ownership of analytical decisions.**
+## Project Status
+
+**Current Phase**: [Update this as project progresses]
+- [ ] Week 1-2: Data foundation (synthetic generation + Snowflake setup)
+- [ ] Week 3-4: dbt transformations (staging → intermediate → marts)
+- [ ] Week 5: AI integration (semantic auditor + safety validator)
+- [ ] Week 6-7: Dashboard (React components)
+- [ ] Week 8: Testing & documentation
+
+**Recent Lessons** (Most Recent First):
+- [Date]: [Lesson learned - update this after each correction]
+
+---
+
+**For detailed workflows, see `.claude/skills/`**
+**For specialized agents, see `.claude/agents/`**
+**For step-by-step procedures, see `.claude/workflows/`**
