@@ -100,4 +100,17 @@
 
 ---
 
+## Week 6: Dashboard Foundation ✓ COMPLETE
+
+**Delivered**:
+- React + TypeScript + Tailwind + Vite scaffold under `frontend/`
+- Single-page tab navigation (Queue, Case Detail, Analytics, Audit Trail)
+- Mock data layer + typed hooks with React Query
+- Zustand state for queue filters + active tab
+- UI components for cards, detail panel, charts, and audit table
+- AI action buttons wired to OpenAI endpoints (semantic audit + nudge validation)
+- Component tests with Vitest + RTL
+
+---
+
 [Continue through Week 8]

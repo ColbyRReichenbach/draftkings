@@ -182,11 +182,12 @@ npm test
 
 ## Project Status
 
-**Current Phase**: Week 5 complete (AI integration)
+**Current Phase**: Week 6 complete (dashboard foundation)
 - [x] Week 1-2: Data foundation (synthetic generation + Snowflake setup) — Week 1 complete; Week 2 complete
 - [x] Week 3-4: dbt transformations (staging → intermediate → marts) — Week 3 complete; Week 4 complete
 - [x] Week 5: AI integration (semantic auditor + safety validator)
-- [ ] Week 6-7: Dashboard (React components)
+- [x] Week 6: Dashboard foundation (React components + mock data + tabs)
+- [ ] Week 7: Dashboard integration (API wiring + polish)
 - [ ] Week 8: Testing & documentation
 
 **Recent Lessons** (Most Recent First):
