@@ -26,7 +26,7 @@ claude/
 ├── skills/                         # Auto-invoked domain expertise
 │   ├── dbt-transformations.md      # dbt best practices
 │   ├── behavioral-analytics.md     # Risk scoring domain knowledge
-│   ├── llm-integration.md          # Claude API patterns
+│   ├── llm-integration.md          # OpenAI-first LLM patterns
 │   └── validate-pipeline.md        # Data quality validation workflow
 ├── agents/                         # Specialized subagents
 │   ├── data-quality-tester.md      # Testing specialist

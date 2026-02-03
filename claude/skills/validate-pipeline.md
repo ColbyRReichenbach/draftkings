@@ -178,7 +178,7 @@ def test_all_nudges_pass_safety_validation():
     # Fetch recent nudges from audit trail
     nudges = fetch_recent_nudges(days=7)
     
-    validator = LLMSafetyValidator(claude_client=...)
+    validator = LLMSafetyValidator(provider=provider, config=config, enable_llm_checks=True)
     
     failures = []
     for nudge in nudges:

@@ -12,7 +12,10 @@
 
 **Solution**: AI-powered triage system reducing analyst queue by 80% while increasing intervention accuracy by 40%.
 
-**Tech Stack**: Snowflake + dbt Core + Python (FastAPI) + React + Claude API
+**Tech Stack**: Snowflake + dbt Core + Python (FastAPI) + React + OpenAI API
+
+**LLM Defaults**: `gpt-4o-mini` for high-volume tasks, `gpt-4.1` for reasoning/explanations  
+Override via `LLM_MODEL_FAST` and `LLM_MODEL_REASONING` if cost/latency requires.
 
 ---
 

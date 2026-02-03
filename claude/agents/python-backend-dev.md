@@ -353,7 +353,7 @@ logger = logging.getLogger(__name__)
     
     This endpoint:
     1. Queries Snowflake for latest risk scores
-    2. Optionally generates AI explanation via Claude API
+    2. Optionally generates AI explanation via OpenAI API
     3. Returns structured risk assessment
     
     Rate limit: 100 requests/minute per API key

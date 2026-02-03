@@ -25,15 +25,15 @@
 │  │              FastAPI Backend (Python 3.11)              │   │
 │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │   │
 │  │  │ Analytics    │  │ Interventions│  │ AI Services  │  │   │
-│  │  │ Router       │  │ Router       │  │ (Claude API) │  │   │
+│  │  │ Router       │  │ Router       │  │ (OpenAI API) │  │   │
 │  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  │   │
 │  └─────────┼──────────────────┼──────────────────┼──────────┘   │
 └────────────┼──────────────────┼──────────────────┼──────────────┘
              │                  │                  │
-             │                  │                  │ Anthropic API
+             │                  │                  │ OpenAI API
              │                  │                  ▼
              │                  │         ┌────────────────────┐
-             │                  │         │ Claude Sonnet 3.5  │
+             │                  │         │ GPT-4.1            │
              │                  │         │ (Semantic Auditor) │
              │                  │         └────────────────────┘
              │                  │
@@ -82,9 +82,9 @@
 | Component | Technology | Justification |
 |-----------|-----------|---------------|
 | **Backend Framework** | FastAPI 0.109+ | Async support; automatic API docs; Pydantic validation; high performance |
-| **Language** | Python 3.11 | Type hints; async/await; rich ecosystem (pandas, pydantic, anthropic SDK) |
+| **Language** | Python 3.11 | Type hints; async/await; rich ecosystem (pandas, pydantic, openai SDK) |
 | **Database Driver** | snowflake-connector-python | Official Snowflake connector; connection pooling |
-| **LLM Integration** | Anthropic Claude API | State-of-the-art language understanding; 200K context window; JSON mode |
+| **LLM Integration** | OpenAI API | State-of-the-art language understanding; JSON mode; OpenAI-first provider |
 
 ### Frontend Layer
 | Component | Technology | Justification |
@@ -223,7 +223,7 @@ LEFT JOIN {{ ref('int_gamalyze_composite') }} g USING (player_id)
 
 **Backend Processing**:
 1. Query Snowflake for latest risk scores
-2. If `generate_nudge=true`: Call Claude API for semantic explanation
+2. If `generate_nudge=true`: Call OpenAI API for semantic explanation
 3. Validate response with `LLMSafetyValidator`
 4. Return structured JSON
 
@@ -319,7 +319,7 @@ npm run dev  # Runs on localhost:5173
 - Snowflake: $0-25/month (trial credits)
 - Railway: $5/month (hobby tier)
 - Vercel: $0 (free tier sufficient)
-- Anthropic API: ~$1-5/month (development usage)
+- OpenAI API: ~$1-5/month (development usage; model-dependent)
 
 **Total**: <$35/month
 
@@ -594,7 +594,7 @@ THEN CALL SYSTEM$SEND_EMAIL(...);
 | Service | Cost/Month | Total (2 months) |
 |---------|-----------|------------------|
 | Snowflake (Trial) | $0 | $0 |
-| Anthropic API | $5 | $10 |
+| OpenAI API | $5 | $10 |
 | Hosting (Local) | $0 | $0 |
 | **Total** | **$5/month** | **$10** |
 
@@ -604,7 +604,7 @@ THEN CALL SYSTEM$SEND_EMAIL(...);
 | Snowflake (XS warehouse) | $25 |
 | Railway (Backend) | $5 |
 | Vercel (Frontend) | $0 |
-| Anthropic API | $10-20 |
+| OpenAI API | $10-20 |
 | **Total** | **$40-50/month** |
 
 **Note**: For portfolio purposes, local development + demo video avoids hosting costs entirely.

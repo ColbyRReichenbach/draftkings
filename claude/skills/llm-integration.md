@@ -1,13 +1,13 @@
 ---
 name: llm-integration
-description: Patterns for Claude API integration and LLM safety validation - use when implementing semantic auditing, generating customer nudges, or validating AI outputs for compliance
+description: Patterns for OpenAI-first LLM integration and LLM safety validation - use when implementing semantic auditing, generating customer nudges, or validating AI outputs for compliance
 allowed-tools: Read, Bash
 ---
 
 # LLM Integration for Semantic Auditing
 
 ## When to Use This Skill
-- Integrating Anthropic Claude API
+- Integrating OpenAI (primary) or Anthropic (fallback) LLM APIs
 - Generating behavioral risk explanations
 - Creating customer nudges
 - Validating AI-generated content for compliance
@@ -15,7 +15,40 @@ allowed-tools: Read, Bash
 
 ---
 
-## Core Pattern: Behavioral Semantic Auditor
+## Project Standard (OpenAI-First)
+
+**Default implementation lives in** `ai_services/` and `backend/`:
+- `ai_services/openai_provider.py`
+- `ai_services/semantic_auditor.py`
+- `ai_services/llm_safety_validator.py`
+- `backend/routers/ai.py`
+
+**Defaults**:
+- Fast model: `gpt-4o-mini`
+- Reasoning model: `gpt-4.1`
+
+**Cost-sensitive override**:
+- `LLM_MODEL_REASONING=gpt-4.1-mini`
+- Override via `LLM_MODEL_FAST`, `LLM_MODEL_REASONING`
+
+**Docs**: `docs/LLM_INTEGRATION.md`
+
+**Quick example (project standard)**:
+```python
+from ai_services.config import LLMConfig
+from ai_services.openai_provider import OpenAIProvider
+from ai_services.semantic_auditor import BehavioralSemanticAuditor
+
+config = LLMConfig()
+provider = OpenAIProvider(api_key=os.getenv("OPENAI_API_KEY"))
+auditor = BehavioralSemanticAuditor(provider=provider, config=config)
+```
+
+---
+
+## Legacy Pattern (Anthropic Reference)
+This section is kept for historical reference. Use the OpenAI-first implementation above unless
+explicitly switching providers.
 
 **Purpose**: Generate human-readable explanations of WHY a player is flagged for intervention.
 ```python

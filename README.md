@@ -31,7 +31,7 @@ docs/             # Documentation
 ```
 
 ## Tech Stack
-- Snowflake + dbt + Python + FastAPI + React + Claude API
+- Snowflake + dbt + Python + FastAPI + React + OpenAI API
 
 ## Key Features
 - 80% reduction in analyst review queue
@@ -44,4 +44,4 @@ docs/             # Documentation
 - claude/skills/ - Domain expertise
 - claude/agents/ - Specialized tasks
 - claude/workflows/ - Step-by-step procedures
-- docs/HITL_REVIEW_SAMPLE.md - Manual analyst review template
+- docs/HITL_REVIEW.md - Completed analyst review with SQL queries

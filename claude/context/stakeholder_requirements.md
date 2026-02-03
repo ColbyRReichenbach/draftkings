@@ -219,7 +219,7 @@
    > "Designed 5-component risk scoring model with research-backed thresholds (r=0.72 correlation with problem gambling indicators), reducing analyst intervention queue by 80% through automated triage while maintaining 100% human-in-the-loop coverage for high-risk cases"
 
 3. **Regulatory Compliance & AI Integration**:
-   > "Built state-specific compliance logic for MA/NJ/PA gaming regulations with 7-year audit trail and Claude API integration for AI-generated risk explanations, demonstrating production-ready MLOps practices (type hints, 80%+ test coverage, automated validation pipeline)"
+   > "Built state-specific compliance logic for MA/NJ/PA gaming regulations with 7-year audit trail and OpenAI API integration for AI-generated risk explanations, demonstrating production-ready MLOps practices (type hints, 80%+ test coverage, automated validation pipeline)"
 
 **Keywords for ATS** (ensure these appear in resume):
 - SQL (window functions, CTEs, incremental processing)
