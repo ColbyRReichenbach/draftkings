@@ -5,8 +5,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['"Space Grotesk"', '"IBM Plex Sans"', 'sans-serif'],
-        body: ['"IBM Plex Sans"', '"Space Grotesk"', 'sans-serif']
+        display: ['"Inter"', 'sans-serif'],
+        body: ['"Inter"', 'sans-serif']
       }
     }
   },

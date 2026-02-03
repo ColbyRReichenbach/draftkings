@@ -20,15 +20,18 @@ export const TabNav = () => {
             key={tab.id}
             type="button"
             onClick={() => setActiveTab(tab.id)}
-            className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+            className={`hover-lift relative rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
               isActive
-                ? 'border-[#53B848] bg-[#53B848] text-white shadow'
-                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900'
+                ? 'border-[#53B848] bg-[#53B848] text-black shadow'
+                : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-slate-500 hover:text-slate-100'
             }`}
             aria-pressed={isActive}
             aria-label={tab.description}
           >
             {tab.label}
+            {isActive ? (
+              <span className="absolute -bottom-2 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-[#53B848]" />
+            ) : null}
           </button>
         );
       })}

@@ -14,7 +14,7 @@ export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
 
   if (!detail) {
     return (
-      <div className="glass-panel flex h-full items-center justify-center rounded-2xl p-8 text-center text-slate-500">
+      <div className="glass-panel flex h-full items-center justify-center rounded-2xl p-8 text-center text-slate-400">
         Select a case from the queue to view details.
       </div>
     );
@@ -45,55 +45,55 @@ export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
   };
 
   return (
-    <div className="glass-panel flex flex-col gap-4 rounded-2xl p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+    <div className="glass-panel panel-sheen flex flex-col gap-4 rounded-2xl p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Case Detail</p>
-          <h2 className="font-display text-2xl text-slate-900">{detail.player_id}</h2>
-          <p className="text-sm text-slate-500">
+          <h2 className="font-display text-2xl text-slate-100">{detail.player_id}</h2>
+          <p className="text-sm text-slate-400">
             {detail.case_id} • {detail.state_jurisdiction}
           </p>
         </div>
-        <div className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
+        <div className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-100">
           Score {(detail.composite_risk_score * 100).toFixed(0)}%
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="panel-sheen rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Evidence Snapshot</p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl bg-slate-50 p-3">
-            <p className="text-xs text-slate-500">Total Bets (7d)</p>
-            <p className="text-lg font-semibold text-slate-900">
+          <div className="rounded-xl bg-slate-950/60 p-3">
+            <p className="text-xs text-slate-400">Total Bets (7d)</p>
+            <p className="text-lg font-semibold text-slate-100">
               {detail.evidence_snapshot.total_bets_7d}
             </p>
           </div>
-          <div className="rounded-xl bg-slate-50 p-3">
-            <p className="text-xs text-slate-500">Total Wagered (7d)</p>
-            <p className="text-lg font-semibold text-slate-900">
+          <div className="rounded-xl bg-slate-950/60 p-3">
+            <p className="text-xs text-slate-400">Total Wagered (7d)</p>
+            <p className="text-lg font-semibold text-slate-100">
               ${detail.evidence_snapshot.total_wagered_7d.toLocaleString()}
             </p>
           </div>
-          <div className="rounded-xl bg-slate-50 p-3">
-            <p className="text-xs text-slate-500">Regulatory Notes</p>
-            <p className="text-sm text-slate-700">{regulatoryNotes}</p>
+          <div className="rounded-xl bg-slate-950/60 p-3">
+            <p className="text-xs text-slate-400">Regulatory Notes</p>
+            <p className="text-sm text-slate-300">{regulatoryNotes}</p>
           </div>
-          <div className="rounded-xl bg-slate-50 p-3">
-            <p className="text-xs text-slate-500">AI Explanation</p>
-            <p className="text-sm text-slate-700">{explanation}</p>
+          <div className="rounded-xl bg-slate-950/60 p-3">
+            <p className="text-xs text-slate-400">AI Explanation</p>
+            <p className="text-sm text-slate-300">{explanation}</p>
           </div>
         </div>
       </div>
 
       <ScoreBreakdown detail={detail} />
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">AI Actions</p>
         <div className="mt-3 flex flex-wrap gap-2">
           <button
             type="button"
             onClick={handleGenerateExplanation}
-            className="rounded-xl bg-[#53B848] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white hover:bg-[#469a3a]"
+            className="hover-lift rounded-xl bg-[#53B848] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-black hover:bg-[#469a3a]"
             disabled={semanticAudit.isPending}
           >
             {semanticAudit.isPending ? 'Generating...' : 'Generate Explanation'}
@@ -101,7 +101,7 @@ export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
           <button
             type="button"
             onClick={handleValidateNudge}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:border-slate-300"
+            className="hover-lift rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-300 hover:border-slate-500"
             disabled={nudgeValidation.isPending}
           >
             {nudgeValidation.isPending ? 'Validating...' : 'Validate Nudge'}

@@ -6,7 +6,7 @@ export const AuditTrailPage = () => {
 
   if (!entries) {
     return (
-      <div className="glass-panel rounded-2xl p-6 text-slate-500">
+      <div className="glass-panel rounded-2xl p-6 text-slate-400">
         Loading audit trail...
       </div>
     );

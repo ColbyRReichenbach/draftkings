@@ -10,7 +10,7 @@ export const ScoreBreakdown = ({ detail }: ScoreBreakdownProps) => {
   const scores = detail.evidence_snapshot;
 
   return (
-    <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+    <div className="panel-sheen grid gap-3 rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Component Scores</p>
       <div className="grid gap-3 sm:grid-cols-2">
         {[
@@ -22,10 +22,10 @@ export const ScoreBreakdown = ({ detail }: ScoreBreakdownProps) => {
         ].map((item) => (
           <div
             key={item.label}
-            className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2"
+            className="flex items-center justify-between rounded-xl bg-slate-950/60 px-3 py-2"
           >
-            <span className="text-sm text-slate-600">{item.label}</span>
-            <span className="text-sm font-semibold text-slate-900">{formatScore(item.value)}</span>
+            <span className="text-sm text-slate-400">{item.label}</span>
+            <span className="text-sm font-semibold text-slate-100">{formatScore(item.value)}</span>
           </div>
         ))}
       </div>

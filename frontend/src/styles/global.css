@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,9 +9,9 @@
 }
 
 body {
-  font-family: 'IBM Plex Sans', sans-serif;
-  background: radial-gradient(circle at top left, #f1f5f9 0%, #f8fafc 45%, #ffffff 100%);
-  color: #111827;
+  font-family: 'Inter', sans-serif;
+  background: radial-gradient(circle at top left, #15171d 0%, #0b0b0d 45%, #070707 100%);
+  color: #f8fafc;
   min-height: 100vh;
 }
 
@@ -20,8 +20,83 @@ body {
 }
 
 .glass-panel {
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(226, 232, 240, 0.7);
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.1);
-  backdrop-filter: blur(14px);
+  background: rgba(15, 17, 22, 0.86);
+  border: 1px solid rgba(38, 40, 48, 0.8);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@layer utilities {
+  .animate-fade-up {
+    animation: fadeUp 0.6s ease-out both;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out both;
+  }
+
+  .hover-lift {
+    transition: transform 200ms ease, box-shadow 200ms ease;
+    will-change: transform;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  }
+
+  .ring-soft {
+    box-shadow: 0 0 0 1px rgba(82, 176, 72, 0.35);
+  }
+
+  .panel-sheen {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel-sheen::after {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -40%;
+    width: 140%;
+    height: 140%;
+    background: radial-gradient(circle, rgba(83, 184, 72, 0.12) 0%, rgba(83, 184, 72, 0) 60%);
+    opacity: 0;
+    transition: opacity 300ms ease;
+    pointer-events: none;
+  }
+
+  .panel-sheen:hover::after {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

@@ -46,7 +46,7 @@ export const QueuePage = () => {
             />
           ))}
           {filteredCases.length === 0 ? (
-            <div className="glass-panel rounded-2xl p-6 text-center text-slate-500">
+            <div className="glass-panel rounded-2xl p-6 text-center text-slate-400">
               No cases match the current filters.
             </div>
           ) : null}

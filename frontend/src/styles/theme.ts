@@ -9,36 +9,36 @@ export const DK_COLORS = {
     red: '#DC2626'
   },
   neutral: {
-    bgLight: '#F5F5F5',
-    textPrimary: '#1A1A1A',
-    textSecondary: '#6B7280',
-    border: '#E5E7EB'
+    bgLight: '#0B0B0D',
+    textPrimary: '#F8FAFC',
+    textSecondary: '#94A3B8',
+    border: '#1F2937'
   }
 } as const;
 
 export const RISK_STYLES = {
   CRITICAL: {
-    bg: 'bg-red-50',
+    bg: 'bg-red-500/10',
     border: 'border-red-500',
-    text: 'text-red-900',
+    text: 'text-red-200',
     badge: 'bg-red-500 text-white'
   },
   HIGH: {
-    bg: 'bg-orange-50',
+    bg: 'bg-[#F3701B]/10',
     border: 'border-[#F3701B]',
-    text: 'text-orange-900',
+    text: 'text-orange-200',
     badge: 'bg-[#F3701B] text-white'
   },
   MEDIUM: {
-    bg: 'bg-yellow-50',
+    bg: 'bg-yellow-500/10',
     border: 'border-yellow-500',
-    text: 'text-yellow-900',
+    text: 'text-yellow-200',
     badge: 'bg-yellow-500 text-black'
   },
   LOW: {
-    bg: 'bg-green-50',
+    bg: 'bg-[#53B848]/10',
     border: 'border-[#53B848]',
-    text: 'text-green-900',
-    badge: 'bg-[#53B848] text-white'
+    text: 'text-emerald-200',
+    badge: 'bg-[#53B848] text-black'
   }
 } as const;

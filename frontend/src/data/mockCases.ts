@@ -218,7 +218,7 @@ export const mockAuditTrail: AuditEntry[] = [
   {
     audit_id: 'AUD-4001',
     player_id: 'PLR_1024_MA',
-    analyst_id: 'AN-019',
+    analyst_id: 'Colby Reichenbach',
     action: 'Immediate outreach',
     risk_category: 'CRITICAL',
     state_jurisdiction: 'MA',
@@ -228,7 +228,7 @@ export const mockAuditTrail: AuditEntry[] = [
   {
     audit_id: 'AUD-4002',
     player_id: 'PLR_2331_NJ',
-    analyst_id: 'AN-021',
+    analyst_id: 'Colby Reichenbach',
     action: 'Monitor and follow-up',
     risk_category: 'HIGH',
     state_jurisdiction: 'NJ',
@@ -238,7 +238,7 @@ export const mockAuditTrail: AuditEntry[] = [
   {
     audit_id: 'AUD-4003',
     player_id: 'PLR_4109_MA',
-    analyst_id: 'AN-017',
+    analyst_id: 'Colby Reichenbach',
     action: 'Send supportive nudge',
     risk_category: 'MEDIUM',
     state_jurisdiction: 'MA',

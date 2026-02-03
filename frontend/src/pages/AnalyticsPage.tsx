@@ -7,7 +7,7 @@ export const AnalyticsPage = () => {
 
   if (!summary) {
     return (
-      <div className="glass-panel rounded-2xl p-6 text-slate-500">
+      <div className="glass-panel rounded-2xl p-6 text-slate-400">
         Loading analytics summary...
       </div>
     );
@@ -21,19 +21,19 @@ export const AnalyticsPage = () => {
         <KpiCard label="Critical Share" value={`${Math.round(summary.critical_share * 100)}%`} />
       </div>
       <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-        <div className="glass-panel rounded-2xl p-6">
+        <div className="glass-panel panel-sheen rounded-2xl p-6">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Weekly Queue Volume</p>
           <div className="mt-4 grid gap-3">
             {summary.weekly_trend.map((row) => (
               <div key={row.week} className="flex items-center gap-3">
-                <span className="w-12 text-xs text-slate-500">{row.week}</span>
-                <div className="h-2 flex-1 rounded-full bg-slate-100">
+                <span className="w-12 text-xs text-slate-400">{row.week}</span>
+                <div className="h-2 flex-1 rounded-full bg-slate-800">
                   <div
-                    className="h-2 rounded-full bg-slate-900"
+                    className="h-2 rounded-full bg-[#53B848]"
                     style={{ width: `${(row.cases / summary.total_cases) * 100}%` }}
                   />
                 </div>
-                <span className="text-xs text-slate-500">{row.cases}</span>
+                <span className="text-xs text-slate-400">{row.cases}</span>
               </div>
             ))}
           </div>

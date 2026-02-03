@@ -21,13 +21,13 @@ export const QueueFilters = () => {
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder="Search by player ID or case"
-            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-[#53B848] focus:outline-none"
+            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-[#53B848] focus:outline-none"
           />
         </div>
         <button
           type="button"
           onClick={resetFilters}
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-800"
+          className="rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-300 hover:border-[#53B848] hover:text-slate-100"
         >
           Reset
         </button>
@@ -42,8 +42,8 @@ export const QueueFilters = () => {
               onClick={() => toggleCategory(category)}
               className={`rounded-full border px-4 py-1 text-xs font-semibold transition-all ${
                 isActive
-                  ? 'border-slate-900 bg-slate-900 text-white'
-                  : 'border-slate-200 bg-white text-slate-600'
+                  ? 'border-[#53B848] bg-[#53B848] text-black'
+                  : 'border-slate-700 bg-slate-900/70 text-slate-300 hover:border-slate-500 hover:text-slate-100'
               }`}
             >
               {category}

@@ -13,16 +13,16 @@ export const RiskDistributionChart = ({ summary }: RiskDistributionChartProps) =
   ];
 
   return (
-    <div className="glass-panel rounded-2xl p-6">
+    <div className="glass-panel panel-sheen rounded-2xl p-6">
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Risk Distribution</p>
       <div className="mt-4 space-y-3">
         {rows.map((row) => (
           <div key={row.label}>
-            <div className="flex items-center justify-between text-xs text-slate-500">
+            <div className="flex items-center justify-between text-xs text-slate-400">
               <span>{row.label}</span>
               <span>{Math.round(row.value * 100)}%</span>
             </div>
-            <div className="mt-1 h-2 w-full rounded-full bg-slate-100">
+            <div className="mt-1 h-2 w-full rounded-full bg-slate-800">
               <div className={`h-2 rounded-full ${row.color}`} style={{ width: `${row.value * 100}%` }} />
             </div>
           </div>

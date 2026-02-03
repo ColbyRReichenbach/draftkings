@@ -8,7 +8,7 @@ export const ActionBar = ({ actions }: ActionBarProps) => (
       <button
         key={action}
         type="button"
-        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:border-[#53B848] hover:text-slate-900"
+        className="rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-300 hover:border-[#53B848] hover:text-slate-100"
       >
         {action}
       </button>
