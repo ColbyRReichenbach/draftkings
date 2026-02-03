@@ -1,0 +1,97 @@
+version: 2
+
+models:
+  - name: rg_risk_scores
+    description: |
+      Composite responsible gaming risk scores for analyst triage.
+
+      Business Logic:
+      - Component scores normalized using thresholds in claude/context/business_logic.md
+      - Weights (v1.0): loss_chase 0.30, bet_escalation 0.25,
+        market_drift 0.15, temporal_risk 0.10, gamalyze 0.20
+      - Missing components imputed using population medians
+
+    config:
+      materialized: table
+
+    meta:
+      owner: "colby@draftkings.com"
+      sla: "<2 hours"
+      business_logic_source: "claude/context/business_logic.md"
+      depends_on:
+        - int_loss_chasing_indicators
+        - int_market_drift_indicators
+        - int_gamalyze_composite
+
+    columns:
+      - name: player_id
+        description: "Unique player identifier"
+        tests:
+          - not_null
+          - unique
+
+      - name: loss_chase_score
+        description: "Normalized loss-chasing score (0-1)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: bet_escalation_score
+        description: "Normalized bet escalation score (0-1)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: market_drift_score
+        description: "Composite market drift score (0-1)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: temporal_risk_score
+        description: "Temporal risk score (0-1, deprecated in favor of market drift)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: gamalyze_risk_score
+        description: "Gamalyze composite score (0-1)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: composite_risk_score
+        description: "Final weighted risk score (0-1)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: risk_category
+        description: "Risk category derived from composite score"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+
+      - name: calculated_at
+        description: "Timestamp when scores were calculated"
+        tests:
+          - not_null

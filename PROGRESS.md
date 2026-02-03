@@ -55,7 +55,22 @@
 
 ---
 
-## Week 3: [TBD]
+## Week 3: Marts Layer (In Progress)
+
+**Goals**:
+- [x] Build composite risk score mart (`rg_risk_scores`)
+- [x] Add marts schema tests + singular validations
+- [x] Validate full dbt test suite
+
+**Delivered**:
+- `rg_risk_scores` marts model with normalization + weight application
+- Tests:
+  - `assert_component_scores_in_range`
+  - `assert_risk_weights_sum_to_one`
+  - `assert_risk_category_thresholds`
+- Validation: `dbt test` 121/121 passing
+
+**Next Week Preview**: Compliance review + analyst workflow integration
 
 ---
 
