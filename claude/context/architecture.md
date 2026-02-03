@@ -646,5 +646,5 @@ THEN CALL SYSTEM$SEND_EMAIL(...);
 
 ---
 
-**For business logic and calculations, see**: `.claude/context/business_logic.md`  
-**For job alignment and success criteria, see**: `.claude/context/stakeholder_requirements.md`
+**For business logic and calculations, see**: `claude/context/business_logic.md`  
+**For job alignment and success criteria, see**: `claude/context/stakeholder_requirements.md`

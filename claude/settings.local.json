@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(python -m data_generation.correlations:*)",
+      "Bash(python3:*)",
+      "Bash(pip3 install:*)",
+      "Bash(dbt debug:*)",
+      "Bash(dbt run:*)",
+      "Bash(dbt test:*)",
+      "Bash(dbt deps:*)",
+      "Bash(dbt show:*)",
+      "Bash(dbt --version:*)",
+      "Bash(python -m data_generation:*)",
+      "Bash(git add:*)",
+      "Bash(du:*)",
+      "Bash(git push:*)",
+      "Bash(git remote add:*)"
+    ]
+  }
+}

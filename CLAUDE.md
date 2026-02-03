@@ -179,8 +179,9 @@ npm test
 
 ## Project Status
 
-**Current Phase**: [Update this as project progresses]
-- [ ] Week 1-2: Data foundation (synthetic generation + Snowflake setup)
+**Current Phase**: Week 3-4 in progress (marts layer)
+- [x] Week 1-2: Data foundation (synthetic generation + Snowflake setup) — Week 1 complete; Week 2 complete
+- [ ] Week 3-4: dbt transformations (staging → intermediate → marts)
 - [ ] Week 3-4: dbt transformations (staging → intermediate → marts)
 - [ ] Week 5: AI integration (semantic auditor + safety validator)
 - [ ] Week 6-7: Dashboard (React components)
@@ -191,6 +192,6 @@ npm test
 
 ---
 
-**For detailed workflows, see `.claude/skills/`**
-**For specialized agents, see `.claude/agents/`**
-**For step-by-step procedures, see `.claude/workflows/`**
+**For detailed workflows, see `claude/skills/`**
+**For specialized agents, see `claude/agents/`**
+**For step-by-step procedures, see `claude/workflows/`**

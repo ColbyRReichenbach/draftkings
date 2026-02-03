@@ -358,4 +358,4 @@ bet_escalation_score: 0.25 → 0.26
 
 ---
 
-**For implementation details, see**: `.claude/skills/behavioral-analytics.md`
+**For implementation details, see**: `claude/skills/behavioral-analytics.md`

@@ -21,7 +21,7 @@ claude
 
 ## Directory Structure
 ```
-.claude/
+claude/
 ├── README.md                       # This file
 ├── skills/                         # Auto-invoked domain expertise
 │   ├── dbt-transformations.md      # dbt best practices

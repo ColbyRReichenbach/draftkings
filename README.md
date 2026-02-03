@@ -16,7 +16,7 @@ claude "Review CLAUDE.md and list first 3 development tasks"
 
 ## Project Structure
 ```
-.claude/          # Claude Code configuration
+claude/          # Claude Code configuration
 ├── skills/       # Domain knowledge (5 files)
 ├── agents/       # Specialized personas (5 files)
 ├── workflows/    # Multi-step procedures (3 files)
@@ -41,6 +41,6 @@ docs/             # Documentation
 
 ## Documentation
 - CLAUDE.md - Project overview
-- .claude/skills/ - Domain expertise
-- .claude/agents/ - Specialized tasks
-- .claude/workflows/ - Step-by-step procedures
+- claude/skills/ - Domain expertise
+- claude/agents/ - Specialized tasks
+- claude/workflows/ - Step-by-step procedures

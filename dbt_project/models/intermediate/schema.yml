@@ -1,0 +1,296 @@
+version: 2
+
+models:
+  - name: int_loss_chasing_indicators
+    description: |
+      Behavioral indicators for loss-chasing patterns (7-day rolling window).
+
+      Business Logic:
+      - bet_after_loss_ratio: bets_after_loss / total_bets
+        Thresholds: <0.40 normal, 0.40-0.75 moderate/high, >0.75 critical
+      - bet_escalation_ratio: avg_bet_after_loss / avg_bet_after_win
+        Thresholds: <1.2 normal, 1.2-2.0 escalating, >2.0 critical
+
+      Excludes players with <2 bets in the 7-day window.
+
+    config:
+      materialized: incremental
+      unique_key: player_id
+
+    meta:
+      owner: "colby@draftkings.com"
+      sla: "<2 hours"
+      business_logic_source: "claude/context/business_logic.md"
+      depends_on:
+        - stg_bet_logs
+        - stg_player_profiles
+      business_logic_rationale: |
+        Bet After Loss Ratio is the strongest empirical predictor of problem
+        gambling (68% of self-excluded players showed ratio >0.75). Bet
+        Escalation Ratio correlates with Gamalyze sensitivity to loss (r=0.72).
+      performance_notes: |
+        Incremental model with time predicate over a 7-day window to limit scans.
+        Cluster by player_id for faster analyst lookups.
+
+    columns:
+      - name: player_id
+        description: "Unique player identifier"
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('stg_player_profiles')
+              field: player_id
+
+      - name: total_bets
+        description: "Total bets in 7-day window"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 2
+
+      - name: bets_after_loss
+        description: "Count of bets placed immediately after a loss"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+
+      - name: avg_bet_after_loss
+        description: "Average bet amount after losses"
+
+      - name: avg_bet_after_win
+        description: "Average bet amount after wins"
+
+      - name: bet_after_loss_ratio
+        description: "Proportion of bets placed after losses (0-1 scale)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: bet_escalation_ratio
+        description: "Bet size multiplier after losses vs wins (capped at 10x)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 10
+              inclusive: true
+
+      - name: last_bet_timestamp
+        description: "Most recent bet timestamp (used for incremental predicate)"
+        tests:
+          - not_null
+
+      - name: calculated_at
+        description: "Timestamp when indicators were calculated"
+        tests:
+          - not_null
+
+  - name: int_market_drift_indicators
+    description: |
+      Market drift indicators (7-day current window vs 90-day baseline).
+
+      Business Logic:
+      - sport_diversity_ratio: unique_sports_7d / baseline_unique_sports_90d
+        Thresholds: <1.5 normal, 1.5-3.0 moderate, >3.0 risky
+      - tier_drop_pct: (baseline_avg_tier_90d - current_avg_tier_7d) / baseline_avg_tier_90d
+        Thresholds: 0.30 moderate, 0.60 high
+      - abnormal_hours_pct: bets_2am_to_6am / total_bets_7d
+        Thresholds: 0.20 moderate, 0.50 high
+
+    config:
+      materialized: incremental
+      unique_key: player_id
+
+    meta:
+      owner: "colby@draftkings.com"
+      sla: "<2 hours"
+      business_logic_source: "claude/context/business_logic.md"
+      depends_on:
+        - stg_bet_logs
+        - stg_player_profiles
+      business_logic_rationale: |
+        Market drift combines horizontal (sport diversity), vertical (market tier),
+        and temporal (late-night betting) signals to flag desperation patterns.
+      performance_notes: |
+        Incremental model with 90-day lookback to maintain baseline accuracy.
+        Cluster by player_id for faster analyst lookups.
+
+    columns:
+      - name: player_id
+        description: "Unique player identifier"
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('stg_player_profiles')
+              field: player_id
+
+      - name: total_bets_7d
+        description: "Total bets in the 7-day current window"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+
+      - name: abnormal_hours_bets_7d
+        description: "Bets placed between 2am and 6am in the 7-day window"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+
+      - name: unique_sports_7d
+        description: "Unique sports bet in the 7-day window"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+
+      - name: baseline_unique_sports_90d
+        description: "Unique sports bet in the 90-day baseline"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+
+      - name: current_avg_tier_7d
+        description: "Average market tier in the 7-day window"
+
+      - name: baseline_avg_tier_90d
+        description: "Average market tier in the 90-day baseline"
+
+      - name: sport_diversity_ratio
+        description: "Ratio of 7d unique sports to 90d baseline"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 10
+              inclusive: true
+
+      - name: tier_drop_pct
+        description: "Percent drop in average market tier (negative means improvement)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: -1
+              max_value: 1
+              inclusive: true
+
+      - name: abnormal_hours_pct
+        description: "Share of 7d bets placed between 2am and 6am"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: last_bet_timestamp
+        description: "Most recent bet timestamp (used for incremental predicate)"
+        tests:
+          - not_null
+
+      - name: calculated_at
+        description: "Timestamp when indicators were calculated"
+        tests:
+          - not_null
+
+  - name: int_gamalyze_composite
+    description: |
+      Gamalyze composite risk score (latest assessment within 90 days).
+
+      Business Logic:
+      - If no assessment in 90 days, default component scores to 50
+      - gamalyze_risk_score = (loss*0.40 + reward*0.25 + risk*0.25 + (100-consistency)*0.10) / 100
+
+    config:
+      materialized: incremental
+      unique_key: player_id
+
+    meta:
+      owner: "colby@draftkings.com"
+      sla: "<2 hours"
+      business_logic_source: "claude/context/business_logic.md"
+      depends_on:
+        - stg_gamalyze_scores
+        - stg_player_profiles
+      business_logic_rationale: |
+        Gamalyze neuro-markers provide external validation. Loss sensitivity is the
+        strongest predictor (r=0.72), followed by reward sensitivity and risk tolerance.
+      performance_notes: |
+        Incremental model with 90-day lookback; defaults to 50 when no recent assessment.
+
+    columns:
+      - name: player_id
+        description: "Unique player identifier"
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('stg_player_profiles')
+              field: player_id
+
+      - name: assessment_id
+        description: "Latest assessment identifier within 90 days (nullable if none)"
+
+      - name: last_assessment_date
+        description: "Date of latest assessment within 90 days (nullable if none)"
+
+      - name: sensitivity_to_loss
+        description: "Gamalyze neuro-marker score (0-100)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      - name: sensitivity_to_reward
+        description: "Gamalyze neuro-marker score (0-100)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      - name: risk_tolerance
+        description: "Gamalyze neuro-marker score (0-100)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      - name: decision_consistency
+        description: "Gamalyze neuro-marker score (0-100)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      - name: gamalyze_version
+        description: "Gamalyze assessment version (nullable if none)"
+
+      - name: gamalyze_risk_score
+        description: "Composite Gamalyze risk score (0-1 scale)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: calculated_at
+        description: "Timestamp when indicators were calculated"
+        tests:
+          - not_null

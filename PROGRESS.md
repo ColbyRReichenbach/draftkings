@@ -26,7 +26,32 @@
 
 ---
 
-## Week 2: [TBD]
+## Week 2: Intermediate Models ✓ COMPLETE
+
+**Goals**:
+- [x] Build loss-chasing indicators (bet-after-loss + escalation)
+- [x] Build market drift indicators (horizontal/vertical/temporal)
+- [x] Build Gamalyze composite score (latest 90-day assessment)
+- [x] Enforce tests + schema documentation for new models
+- [x] Run full dbt test suite
+
+**Delivered**:
+- Intermediate models:
+  - `int_loss_chasing_indicators`
+  - `int_market_drift_indicators`
+  - `int_gamalyze_composite`
+- Added local `accepted_range` test macro (offline-safe; no dbt_utils dependency)
+- Singular tests:
+  - `assert_loss_chasing_min_bets`
+  - `assert_loss_chasing_ratios_valid`
+  - `assert_market_drift_ratios_valid`
+  - `assert_gamalyze_score_bounds`
+- Validation: `dbt test` 101/101 passing
+
+**Notes**:
+- Removed external dbt package dependency to keep offline dev environment stable.
+
+**Next Week Preview**: Marts layer (composite risk scores + categories)
 
 ---
 

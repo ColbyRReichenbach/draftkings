@@ -273,4 +273,4 @@
 
 ---
 
-**For technical implementation details, see**: `.claude/context/architecture.md`
+**For technical implementation details, see**: `claude/context/architecture.md`
