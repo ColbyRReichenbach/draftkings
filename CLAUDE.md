@@ -179,9 +179,9 @@ npm test
 
 ## Project Status
 
-**Current Phase**: Week 3-4 in progress (marts layer)
+**Current Phase**: Week 4 in progress (compliance + analyst workflow)
 - [x] Week 1-2: Data foundation (synthetic generation + Snowflake setup) — Week 1 complete; Week 2 complete
-- [ ] Week 3-4: dbt transformations (staging → intermediate → marts)
+- [x] Week 3-4: dbt transformations (staging → intermediate → marts) — Week 3 complete; Week 4 in progress
 - [ ] Week 3-4: dbt transformations (staging → intermediate → marts)
 - [ ] Week 5: AI integration (semantic auditor + safety validator)
 - [ ] Week 6-7: Dashboard (React components)

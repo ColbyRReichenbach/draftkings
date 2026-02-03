@@ -12,6 +12,38 @@ Synthetic data for DK Sentinel portfolio project, designed to match published re
 
 **Our Distribution**: Slightly conservative (1.5% high + 0.5% critical = 2%) to ensure sufficient test cases for intervention queue.
 
+### Tuning Note (2026-02-03)
+To better align risk-category outputs with business logic thresholds while preserving cohort prevalence,
+we increased behavioral severity ranges for **high_risk** and **critical** cohorts only. This was necessary
+because end-to-end scoring produced too few HIGH/CRITICAL flags at the documented cohort mix.
+
+**What changed (high/critical only)**:
+- Higher bet_after_loss_ratio ranges
+- Higher bet_escalation_ratio ranges
+- Higher late-night betting percentages
+- Slightly higher bets_per_week ranges
+- Stronger market tier drift (toward niche markets)
+
+**Why**: The state-machine implementation attenuates some latent-factor effects, so severity needed to be
+raised to consistently cross the risk thresholds defined in `claude/context/business_logic.md`.
+
+### Additional Tuning Note (2026-02-03)
+We introduced cohort-specific win rates to increase loss-chasing ratios **without** changing any
+business-logic thresholds. Higher-risk cohorts are modeled as selecting longer-odds markets, which
+lowers win rates and increases bet-after-loss ratios.
+
+**Cohort win rates**:
+- low_risk: 0.47
+- medium_risk: 0.45
+- high_risk: 0.35
+- critical: 0.30
+
+**Additional adjustments**:
+- Clamped `target_bet_escalation` per cohort to match configured escalation ranges
+- Accelerated market drift late in the window (nonlinear drift + niche sport exploration)
+- Enforced monotonic bet timestamps to preserve correct loss-chasing order
+- Stop bet generation when end_date is reached to avoid timestamp clustering
+
 ### Sport Distribution
 **Source**: American Gaming Association Annual Report (2024)
 - NFL: 35-45% of handle → Used 40%
@@ -58,7 +90,7 @@ Note: The latent-factor Cholesky decomposition correctly seeds correlations into
 
 ## Simplifications & Assumptions
 
-1. **Assumption**: Uniform distribution across 30-day window (real data has weekly cycles)
+1. **Assumption**: Uniform distribution across 90-day window (real data has weekly cycles)
    - **Justification**: Simplifies generation; pipeline can handle temporal clustering
    
 2. **Assumption**: Independent bet outcomes (real bettors have hot/cold streaks)

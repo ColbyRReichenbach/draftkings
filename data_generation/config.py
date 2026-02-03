@@ -19,7 +19,7 @@ from typing import Dict, Tuple
 # =============================================================================
 
 TOTAL_PLAYERS = 10000
-TARGET_TOTAL_BETS = 216000  # Approximate (driven by per-cohort bets_per_week, not enforced)
+TARGET_TOTAL_BETS = 500000  # Approximate (driven by per-cohort bets_per_week, not enforced)
 RANDOM_SEED = 42  # For reproducibility
 
 # =============================================================================
@@ -27,9 +27,9 @@ RANDOM_SEED = 42  # For reproducibility
 # =============================================================================
 
 START_DATE = '2026-01-01'
-END_DATE = '2026-01-30'  # 30-day window
-DAYS_IN_WINDOW = 30
-WEEKS_IN_WINDOW = 30 / 7  # ~4.3 weeks
+END_DATE = '2026-03-31'  # 90-day window to target ~500k bets
+DAYS_IN_WINDOW = 90
+WEEKS_IN_WINDOW = 90 / 7  # ~12.9 weeks
 
 # =============================================================================
 # PLAYER COHORT DISTRIBUTION
@@ -117,19 +117,19 @@ BEHAVIOR_RANGES: Dict[str, Dict[str, Tuple[float, float]]] = {
         'base_bet_amount': (25, 100)              # Medium stakes
     },
     'high_risk': {
-        'bet_after_loss_ratio': (0.70, 0.85),      # High loss-chasing
-        'bet_escalation_ratio': (2.0, 3.5),        # Significant escalation
-        'bets_per_week': (30, 50),                 # High frequency
-        'late_night_pct': (0.35, 0.50),           # 35-50% late-night
-        'market_tier_drift': (-0.5, -0.3),        # Clear drift to niche
+        'bet_after_loss_ratio': (0.85, 0.95),      # High loss-chasing (tuned)
+        'bet_escalation_ratio': (2.5, 4.0),        # Significant escalation (tuned)
+        'bets_per_week': (35, 60),                 # High frequency (tuned)
+        'late_night_pct': (0.45, 0.60),           # 45-60% late-night (tuned)
+        'market_tier_drift': (-0.6, -0.35),       # Clear drift to niche (tuned)
         'base_bet_amount': (50, 250)              # Higher stakes
     },
     'critical': {
-        'bet_after_loss_ratio': (0.85, 0.98),      # Nearly always chases
-        'bet_escalation_ratio': (3.5, 6.0),        # Severe escalation
-        'bets_per_week': (50, 80),                 # Very high frequency
-        'late_night_pct': (0.50, 0.70),           # 50-70% late-night
-        'market_tier_drift': (-0.8, -0.5),        # Extreme drift (desperation)
+        'bet_after_loss_ratio': (0.95, 0.99),      # Nearly always chases (tuned)
+        'bet_escalation_ratio': (4.0, 7.0),        # Severe escalation (tuned)
+        'bets_per_week': (60, 90),                 # Very high frequency (tuned)
+        'late_night_pct': (0.60, 0.75),           # 60-75% late-night (tuned)
+        'market_tier_drift': (-0.85, -0.60),      # Extreme drift (desperation, tuned)
         'base_bet_amount': (100, 500)             # High stakes
     }
 }
@@ -204,7 +204,16 @@ GAMALYZE_ASSESSMENT_LOOKBACK_DAYS = 90
 # =============================================================================
 
 # Outcome probabilities
-WIN_RATE_BASELINE = 0.47  # Realistic sportsbook win rate (slightly below 50% due to vig)
+WIN_RATE_BASELINE = 0.47  # Reference win rate for recreational betting (slightly below 50% due to vig)
+
+# Cohort-specific win rates to reflect riskier bet selection for high/critical players
+# (Lower win rates increase loss-chasing ratios without changing business logic thresholds)
+COHORT_WIN_RATES: Dict[str, float] = {
+    'low_risk': 0.47,     # Recreational baseline
+    'medium_risk': 0.45,  # Slightly riskier selection
+    'high_risk': 0.35,    # Longshot/volatile betting
+    'critical': 0.30      # Extreme risk-taking (parlays/low-odds hits)
+}
 
 # Temporal patterns (hours of day)
 PRIMETIME_START_HOUR = 18  # 6 PM
@@ -249,8 +258,8 @@ NUM_EDGE_CASES = len(EDGE_CASE_PLAYERS)
 
 # Count validations
 EXPECTED_PLAYERS = TOTAL_PLAYERS
-MIN_BETS = 180000  # Allow some variance around ~216K
-MAX_BETS = 260000
+MIN_BETS = 450000  # Allow variance around ~500K target
+MAX_BETS = 520000
 EXPECTED_GAMALYZE_SCORES = TOTAL_PLAYERS  # Edge case removal not yet implemented
 
 # Statistical test thresholds

@@ -44,3 +44,4 @@ docs/             # Documentation
 - claude/skills/ - Domain expertise
 - claude/agents/ - Specialized tasks
 - claude/workflows/ - Step-by-step procedures
+- docs/HITL_REVIEW_SAMPLE.md - Manual analyst review template

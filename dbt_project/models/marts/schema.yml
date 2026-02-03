@@ -95,3 +95,188 @@ models:
         description: "Timestamp when scores were calculated"
         tests:
           - not_null
+
+  - name: rg_audit_trail
+    description: |
+      Audit trail foundation for compliance and HITL review.
+
+      Required Fields:
+      - analyst_id, analyst_action, analyst_notes, state_jurisdiction
+
+      Note: analyst fields are nullable until workflow integration is implemented.
+
+    config:
+      materialized: incremental
+      unique_key: audit_id
+
+    meta:
+      owner: "colby@draftkings.com"
+      sla: "<2 hours"
+      business_logic_source: "claude/context/business_logic.md"
+      depends_on:
+        - rg_risk_scores
+        - stg_player_profiles
+
+    columns:
+      - name: audit_id
+        description: "Unique audit record identifier"
+        tests:
+          - not_null
+          - unique
+
+      - name: player_id
+        description: "Player identifier linked to risk scores"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_player_profiles')
+              field: player_id
+
+      - name: risk_category
+        description: "Risk category at time of flag"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+
+      - name: composite_risk_score
+        description: "Composite risk score at time of flag"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: score_calculated_at
+        description: "Timestamp when risk score was calculated"
+        tests:
+          - not_null
+
+      - name: state_jurisdiction
+        description: "Player jurisdiction for regulatory routing (MA/NJ/PA)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['MA', 'NJ', 'PA']
+
+      - name: analyst_id
+        description: "Analyst who reviewed the case (HITL)"
+
+      - name: analyst_action
+        description: "Decision taken by analyst (e.g., approve, escalate)"
+
+      - name: analyst_notes
+        description: "Analyst rationale (minimum 10 chars recommended)"
+
+      - name: customer_notification_sent
+        description: "Whether a customer notification was sent"
+
+      - name: intervention_type
+        description: "Intervention type (nudge, timeout, watchlist)"
+
+      - name: review_duration_seconds
+        description: "Seconds spent by analyst in review"
+
+      - name: created_at
+        description: "Audit record creation timestamp"
+        tests:
+          - not_null
+
+  - name: rg_intervention_queue
+    description: |
+      Analyst intervention queue for HIGH and CRITICAL risk cases.
+
+      Business Logic:
+      - Include only HIGH/CRITICAL risk categories
+      - Provide primary driver for analyst triage
+
+    config:
+      materialized: table
+
+    meta:
+      owner: "colby@draftkings.com"
+      sla: "<2 hours"
+      business_logic_source: "claude/context/business_logic.md"
+      depends_on:
+        - rg_risk_scores
+
+    columns:
+      - name: player_id
+        description: "Unique player identifier"
+        tests:
+          - not_null
+          - unique
+
+      - name: composite_risk_score
+        description: "Composite risk score (0-1)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: risk_category
+        description: "Risk category (HIGH or CRITICAL)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['HIGH', 'CRITICAL']
+
+      - name: primary_driver
+        description: "Primary driver of risk for triage"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['LOSS_CHASE', 'BET_ESCALATION', 'MARKET_DRIFT', 'TEMPORAL_RISK', 'GAMALYZE']
+
+      - name: loss_chase_score
+        description: "Normalized loss-chasing score (0-1)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: bet_escalation_score
+        description: "Normalized bet escalation score (0-1)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: market_drift_score
+        description: "Market drift score (0-1)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: temporal_risk_score
+        description: "Temporal risk score (0-1)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: gamalyze_risk_score
+        description: "Gamalyze composite score (0-1)"
+        tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 1
+              inclusive: true
+
+      - name: calculated_at
+        description: "Timestamp when scores were calculated"
+        tests:
+          - not_null

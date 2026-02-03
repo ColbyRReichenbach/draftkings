@@ -20,6 +20,7 @@ from .config import (
     TOTAL_PLAYERS,
     COHORT_DISTRIBUTION,
     STATE_DISTRIBUTION,
+    BEHAVIOR_RANGES,
     RANDOM_SEED
 )
 from .correlations import generate_latent_factors_for_cohort
@@ -200,6 +201,15 @@ def generate_players(n_players: int = TOTAL_PLAYERS) -> pd.DataFrame:
     players_df['latent_risk_tolerance'] = latent_factors[:, 1]
     players_df['latent_consistency'] = latent_factors[:, 2]
     players_df['target_bet_escalation'] = latent_factors[:, 3]
+
+    # Clamp escalation targets to cohort-specific ranges for consistent bet escalation behavior
+    for cohort, ranges in BEHAVIOR_RANGES.items():
+        min_ratio, max_ratio = ranges['bet_escalation_ratio']
+        mask = players_df['risk_cohort'] == cohort
+        if mask.any():
+            players_df.loc[mask, 'target_bet_escalation'] = (
+                players_df.loc[mask, 'target_bet_escalation'].clip(min_ratio, max_ratio)
+            )
 
     print(f"✓ Generated {len(players_df)} players")
 

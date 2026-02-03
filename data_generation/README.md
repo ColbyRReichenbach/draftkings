@@ -4,7 +4,7 @@ Synthetic data generator for responsible gambling analytics portfolio project.
 
 ## Overview
 
-Generates 10,000 players with ~216,000 bets exhibiting research-backed responsible gambling patterns including:
+Generates 10,000 players with ~500,000 bets exhibiting research-backed responsible gambling patterns including:
 - Statistical correlations (Cholesky decomposition)
 - Loss-chasing behavior (finite state machine)
 - Market drift patterns (NFL → Table Tennis for high-risk players)
@@ -17,7 +17,7 @@ Generates 10,000 players with ~216,000 bets exhibiting research-backed responsib
 # Install dependencies
 pip install -r requirements.txt
 
-# Generate full dataset (10K players, ~216K bets)
+# Generate full dataset (10K players, ~500K bets)
 python -m data_generation
 
 # Generate to specific directory
@@ -47,7 +47,7 @@ PLR_0001_MA,John,Doe,john.doe@example.com,35,MA,low_risk
 - `state`: MA, NJ, or PA (regulatory focus states)
 - `risk_cohort`: low_risk (90%), medium_risk (8%), high_risk (1.5%), critical (0.5%)
 
-### 2. `bets.csv` (~216,000 rows, ~15 MB)
+### 2. `bets.csv` (~500,000 rows)
 ```csv
 bet_id,player_id,bet_timestamp,sport_category,market_type,bet_amount,odds_american,outcome
 BET_00000001,PLR_0001_MA,2026-01-02T20:15:33,NFL,moneyline,45.50,-110,win
@@ -126,6 +126,23 @@ High-risk players progressively shift from major sports to niche markets:
   - 60% primetime
   - 40% late-night (2-6 AM) during severe chasing
 
+### 5b. Outcome Probabilities (By Cohort)
+
+To align loss-chasing ratios with business logic thresholds, win rates vary by cohort:
+- low_risk: 0.47
+- medium_risk: 0.45
+- high_risk: 0.35
+- critical: 0.30
+
+Rationale: Higher-risk cohorts are modeled as selecting longer-odds markets, which lowers win rates
+and increases bet-after-loss ratios without changing scoring thresholds.
+
+Additional tuning:
+- `target_bet_escalation` is clamped to cohort ranges for consistent escalation behavior
+- Market drift accelerates late in the window to better surface vertical/horizontal drift
+- Bet timestamps are enforced to be non-decreasing to preserve loss-chasing sequence order
+- Bet generation stops at the end of the window to avoid timestamp clustering
+
 ### 6. Edge Cases
 
 10 special test cases for pipeline robustness (see `edge_cases.py`):
@@ -163,7 +180,7 @@ The generator includes a comprehensive validation suite:
 
 **Tier 1: Count Validations**
 - Players: Exactly 10,000
-- Bets: ~216,000 (driven by per-cohort `bets_per_week` config; `TARGET_TOTAL_BETS` in config.py is not enforced)
+- Bets: ~500,000 (driven by per-cohort `bets_per_week` over a 90-day window; `TARGET_TOTAL_BETS` is not enforced)
 - Gamalyze: 10,000 (edge case removal not yet implemented)
 
 **Tier 2: Data Quality**
@@ -186,13 +203,13 @@ python -m data_generation --no-validate  # Skip for speed
 
 ## Performance
 
-Benchmarks on MacBook Pro M1:
+Benchmarks on MacBook Pro M1 (90-day window; approximate):
 
 | Players | Bets | Time |
 |---------|------|------|
 | 100 | ~2K | ~1s |
 | 1,000 | ~20K | ~2s |
-| 10,000 | ~216K | ~20s |
+| 10,000 | ~500K | ~30s |
 
 **Bottleneck**: Bet generation (state machine requires sequential processing)
 

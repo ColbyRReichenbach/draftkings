@@ -22,6 +22,7 @@ from .config import (
     MARKET_TIERS,
     BEHAVIOR_RANGES,
     WIN_RATE_BASELINE,
+    COHORT_WIN_RATES,
     PRIMETIME_MEAN_HOUR,
     PRIMETIME_STD_HOURS,
     LATE_NIGHT_START_HOUR,
@@ -180,21 +181,33 @@ def select_sport_with_drift(cohort: str,
     # Start with baseline distribution
     dist = SPORT_DISTRIBUTION_BASELINE.copy()
 
-    # Apply market drift for medium/high/critical players
+    # Apply market drift for medium/high/critical players (accelerates late in window)
     if cohort == 'medium_risk':
-        niche_boost = progress_pct * 0.10  # 10% drift
+        drift_factor = progress_pct ** 1.5
+        niche_boost = drift_factor * 0.12  # gentle drift
     elif cohort == 'high_risk':
-        niche_boost = progress_pct * 0.20  # 20% drift
+        drift_factor = progress_pct ** 2
+        niche_boost = drift_factor * 0.35  # stronger late drift
     elif cohort == 'critical':
-        niche_boost = progress_pct * 0.30  # 30% drift
+        drift_factor = progress_pct ** 2.2
+        niche_boost = drift_factor * 0.50  # extreme late drift
     else:
         niche_boost = 0.0
 
+    # Late-window exploration increases sport diversity for high/critical cohorts
+    if cohort in ['high_risk', 'critical'] and progress_pct > 0.7:
+        exploration_prob = 0.20 if cohort == 'high_risk' else 0.35
+        if np.random.random() < exploration_prob:
+            return np.random.choice(list(dist.keys()))
+
     if niche_boost > 0:
-        # Shift probability mass from major sports to niche
-        dist['TABLE_TENNIS'] += niche_boost
-        dist['NFL'] -= niche_boost * 0.5
-        dist['NBA'] -= niche_boost * 0.5
+        # Shift probability mass from major sports to niche/low-tier markets
+        dist['TABLE_TENNIS'] += niche_boost * 0.50
+        dist['MMA'] += niche_boost * 0.25
+        dist['TENNIS'] += niche_boost * 0.25
+        dist['NFL'] -= niche_boost * 0.40
+        dist['NBA'] -= niche_boost * 0.30
+        dist['MLB'] -= niche_boost * 0.30
 
         # Ensure no negative probabilities
         dist = {k: max(0, v) for k, v in dist.items()}
@@ -263,7 +276,13 @@ def generate_bet_timestamp(current_date: datetime,
     minute = np.random.randint(0, 60)
     second = np.random.randint(0, 60)
 
-    return new_date.replace(hour=hour, minute=minute, second=second)
+    timestamp = new_date.replace(hour=hour, minute=minute, second=second)
+    # Enforce monotonic timestamps while preserving time-of-day distribution
+    if timestamp < current_date:
+        timestamp = timestamp + timedelta(days=1)
+        if timestamp > end_date:
+            timestamp = end_date
+    return timestamp
 
 
 # =============================================================================
@@ -309,9 +328,11 @@ def generate_bets_for_single_player(player: pd.Series,
     # Generate bets
     bets = []
     current_date = datetime.strptime(START_DATE, '%Y-%m-%d')
-    end = datetime.strptime(END_DATE, '%Y-%m-%d')
+    end = datetime.strptime(END_DATE, '%Y-%m-%d') + timedelta(days=1) - timedelta(seconds=1)
 
     for bet_num in range(total_bets):
+        if current_date >= end:
+            break
         # Progress through betting window (0.0 to 1.0)
         progress_pct = bet_num / max(total_bets, 1)
 
@@ -333,8 +354,9 @@ def generate_bets_for_single_player(player: pd.Series,
         # Generate realistic odds
         odds = generate_realistic_odds(sport)
 
-        # Simulate outcome
-        outcome = 'win' if np.random.random() < WIN_RATE_BASELINE else 'loss'
+        # Simulate outcome (cohort-specific win rates)
+        win_rate = COHORT_WIN_RATES.get(cohort, WIN_RATE_BASELINE)
+        outcome = 'win' if np.random.random() < win_rate else 'loss'
 
         # Update state machine
         state_machine.process_outcome(outcome)
@@ -493,10 +515,15 @@ def validate_bet_generation(bets_df: pd.DataFrame,
     results['valid_outcomes'] = bets_df['outcome'].isin(['win', 'loss']).all()
     print(f"  All outcomes are win/loss: {'✓' if results['valid_outcomes'] else '✗'}")
 
-    # Win rate approximately 47%
+    # Win rate approximately expected cohort-weighted rate
     win_rate = (bets_df['outcome'] == 'win').mean()
-    results['realistic_win_rate'] = 0.40 < win_rate < 0.54  # ±7% tolerance
-    print(f"  Win rate: {win_rate:.3f} (expected: ~0.47) "
+    cohort_dist = players_df['risk_cohort'].value_counts(normalize=True)
+    expected_win_rate = sum(
+        COHORT_WIN_RATES.get(cohort, WIN_RATE_BASELINE) * pct
+        for cohort, pct in cohort_dist.items()
+    )
+    results['realistic_win_rate'] = (expected_win_rate - 0.07) < win_rate < (expected_win_rate + 0.07)
+    print(f"  Win rate: {win_rate:.3f} (expected: ~{expected_win_rate:.3f}) "
           f"{'✓' if results['realistic_win_rate'] else '✗'}")
 
     # Sport distribution
