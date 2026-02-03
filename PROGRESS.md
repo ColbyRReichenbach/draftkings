@@ -74,12 +74,14 @@
 
 ---
 
-## Week 4: [TBD]
-**In Progress**:
-- [x] Compliance foundation: `rg_audit_trail`
-- [x] Analyst queue: `rg_intervention_queue`
-- [x] Full dbt validation (152/152 tests)
- - [x] Data generator tuning to better surface HIGH/CRITICAL risk categories (documented rationale)
+## Week 4: Compliance + Analyst Workflow ✓ COMPLETE
+
+**Delivered**:
+- Compliance foundation: `rg_audit_trail`
+- Analyst queue: `rg_intervention_queue`
+- Full dbt validation (152/152 tests)
+- Data generator tuning to better surface HIGH/CRITICAL risk categories (documented rationale)
+- Completed HITL analyst review with 15 cases in `docs/HITL_REVIEW.md` (including regulatory trigger cross-checks)
 
 ---
 
