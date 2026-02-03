@@ -182,10 +182,10 @@ npm test
 
 ## Project Status
 
-**Current Phase**: Week 4 complete (compliance + analyst workflow)
+**Current Phase**: Week 5 complete (AI integration)
 - [x] Week 1-2: Data foundation (synthetic generation + Snowflake setup) — Week 1 complete; Week 2 complete
 - [x] Week 3-4: dbt transformations (staging → intermediate → marts) — Week 3 complete; Week 4 complete
-- [ ] Week 5: AI integration (semantic auditor + safety validator)
+- [x] Week 5: AI integration (semantic auditor + safety validator)
 - [ ] Week 6-7: Dashboard (React components)
 - [ ] Week 8: Testing & documentation
 

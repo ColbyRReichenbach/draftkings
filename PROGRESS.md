@@ -85,4 +85,19 @@
 
 ---
 
+## Week 5: AI Integration ✓ COMPLETE
+
+**Delivered**:
+- OpenAI-first LLM integration (`ai_services/` + `backend/`)
+- Semantic auditor + safety validator with provider-agnostic interfaces
+- FastAPI endpoints: `/api/ai/semantic-audit` and `/api/ai/validate-nudge`
+- Pydantic request/response schemas for LLM I/O
+- Integration docs in `docs/LLM_INTEGRATION.md`
+- Unit tests for auditor + safety validator (pytest)
+
+**Validation**:
+- `pytest` 4/4 passing
+
+---
+
 [Continue through Week 8]
