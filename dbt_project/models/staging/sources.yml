@@ -1,0 +1,149 @@
+version: 2
+
+sources:
+  - name: raw
+    description: >
+      Raw data loaded from CSV files into DuckDB.
+      This is the source of truth for all downstream transformations.
+
+    database: dk_sentinel
+    schema: raw
+
+    tables:
+      - name: player_accounts
+        description: >
+          Player demographic and account information.
+          Generated with realistic responsible gambling cohorts (90% low-risk, 8% medium, 1.5% high, 0.5% critical).
+
+        columns:
+          - name: player_id
+            description: "Unique player identifier (format: PLR_####_{STATE})"
+            tests:
+              - unique
+              - not_null
+
+          - name: first_name
+            description: Player first name (generated with Faker)
+
+          - name: last_name
+            description: Player last name (generated with Faker)
+
+          - name: email
+            description: Player email address
+            tests:
+              - not_null
+
+          - name: age
+            description: Player age (21-75, legal betting age)
+            tests:
+              - not_null
+
+          - name: state
+            description: Player state jurisdiction (MA, NJ, or PA)
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ['MA', 'NJ', 'PA']
+
+          - name: risk_cohort
+            description: Player risk classification (low_risk, medium_risk, high_risk, critical)
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ['low_risk', 'medium_risk', 'high_risk', 'critical']
+
+      - name: bet_transactions
+        description: >
+          Individual betting transactions with timestamps, amounts, sports, and outcomes.
+          Generated with state machine for realistic loss-chasing patterns.
+
+        columns:
+          - name: bet_id
+            description: "Unique bet identifier (format: BET_########)"
+            tests:
+              - unique
+              - not_null
+
+          - name: player_id
+            description: Foreign key to player_accounts
+            tests:
+              - not_null
+              - relationships:
+                  to: source('raw', 'player_accounts')
+                  field: player_id
+
+          - name: bet_timestamp
+            description: Timestamp when bet was placed (ISO 8601 format)
+            tests:
+              - not_null
+
+          - name: sport_category
+            description: Sport type (NFL, NBA, MLB, NHL, SOCCER, MMA, TENNIS, TABLE_TENNIS)
+            tests:
+              - not_null
+
+          - name: market_type
+            description: Type of bet market (moneyline, spread, etc.)
+
+          - name: bet_amount
+            description: Amount wagered in dollars
+            tests:
+              - not_null
+
+          - name: odds_american
+            description: American odds format (e.g., -110, +150)
+
+          - name: outcome
+            description: Bet result (win or loss)
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ['win', 'loss']
+
+      - name: gamalyze_assessments
+        description: >
+          Gamalyze neuro-marker assessment scores (0-100 scale).
+          Correlated with betting behavior via latent factors (r=0.72 with bet escalation).
+
+        columns:
+          - name: assessment_id
+            description: Unique assessment identifier
+            tests:
+              - unique
+              - not_null
+
+          - name: player_id
+            description: Foreign key to player_accounts
+            tests:
+              - not_null
+              - relationships:
+                  to: source('raw', 'player_accounts')
+                  field: player_id
+
+          - name: assessment_date
+            description: Date of Gamalyze assessment
+            tests:
+              - not_null
+
+          - name: sensitivity_to_loss
+            description: Neuro-marker score (0-100) - reaction to losses
+            tests:
+              - not_null
+
+          - name: sensitivity_to_reward
+            description: Neuro-marker score (0-100) - reaction to wins
+            tests:
+              - not_null
+
+          - name: risk_tolerance
+            description: Neuro-marker score (0-100) - willingness to accept risk
+            tests:
+              - not_null
+
+          - name: decision_consistency
+            description: Neuro-marker score (0-100) - ability to make consistent decisions
+            tests:
+              - not_null
+
+          - name: gamalyze_version
+            description: Version of Gamalyze assessment tool used

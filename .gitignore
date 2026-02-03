@@ -4,11 +4,23 @@ __pycache__/
 venv/
 .env
 
+# Generated data (regenerate: python -m data_generation && python scripts/load_to_duckdb.py)
+data/*.csv
+data/test_run/
+
+# DuckDB
+data/*.duckdb
+data/*.duckdb.wal
+data/*.duckdb.tmp
+
 # dbt
 target/
 dbt_packages/
 logs/
 profiles.yml
+dbt_project/target/
+dbt_project/logs/
+dbt_project/dbt_packages/
 
 # Node/React
 node_modules/

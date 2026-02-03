@@ -1,0 +1,46 @@
+# dbt Project Configuration for DK Sentinel
+#
+# This file defines the dbt project structure and model configurations.
+# Follows the medallion architecture: staging → intermediate → marts
+
+name: 'dk_sentinel'
+version: '1.0.0'
+config-version: 2
+
+# Profile to use (references profiles.yml)
+profile: 'dk_sentinel'
+
+# Directory paths
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+analysis-paths: []
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+  - "logs"
+
+# Model configurations
+models:
+  dk_sentinel:
+    # Staging layer: Views for data cleaning and standardization
+    staging:
+      +materialized: view
+      +schema: staging
+
+    # Intermediate layer: Incremental tables for feature engineering
+    intermediate:
+      +materialized: incremental
+      +schema: prod
+      +on_schema_change: 'append_new_columns'
+
+    # Marts layer: Final tables for consumption
+    marts:
+      +materialized: table
+      +schema: prod
+
+# Test configurations
+tests:
+  +store_failures: true
+  +schema: test_results

@@ -1,0 +1,248 @@
+version: 2
+
+models:
+  - name: stg_bet_logs
+    description: |
+      Staging layer for raw bet transactions with data contract enforcement.
+
+      Data Quality Rules:
+      - All bets must have a valid timestamp (bet_timestamp IS NOT NULL)
+      - Bet amounts must be positive (bet_amount > 0)
+      - Sport categories standardized to uppercase and trimmed
+      - Bet amounts cast to DECIMAL(10,2) for consistent precision
+
+      Source: raw.bet_transactions
+
+    config:
+      contract:
+        enforced: true
+
+    columns:
+      - name: bet_id
+        data_type: varchar
+        description: "Unique bet identifier (format: BET_########)"
+        constraints:
+          - type: not_null
+          - type: unique
+        tests:
+          - not_null
+          - unique
+
+      - name: player_id
+        data_type: varchar
+        description: "Foreign key to player_accounts table (format: PLR_####_{STATE})"
+        constraints:
+          - type: not_null
+        tests:
+          - not_null
+          - relationships:
+              to: source('raw', 'player_accounts')
+              field: player_id
+
+      - name: bet_timestamp
+        data_type: timestamp
+        description: Timestamp when bet was placed (ISO 8601 format)
+        constraints:
+          - type: not_null
+        tests:
+          - not_null
+
+      - name: sport_category
+        data_type: varchar
+        description: |
+          Sport type, standardized to uppercase.
+          Valid values: NFL, NBA, MLB, NHL, SOCCER, MMA, TENNIS, TABLE_TENNIS
+        constraints:
+          - type: not_null
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['NFL', 'NBA', 'MLB', 'NHL', 'SOCCER', 'MMA', 'TENNIS', 'TABLE_TENNIS']
+
+      - name: market_type
+        data_type: varchar
+        description: Type of bet market (e.g., moneyline, spread, over_under, prop)
+
+      - name: bet_amount
+        data_type: decimal(10,2)
+        description: |
+          Amount wagered in dollars, cast to DECIMAL(10,2).
+          Must be positive (filtered in WHERE clause).
+          Expected range: $0.01 - $10,000
+        constraints:
+          - type: not_null
+        tests:
+          - not_null
+
+      - name: odds_american
+        data_type: bigint
+        description: American odds format (e.g., -110, +150)
+
+      - name: outcome
+        data_type: varchar
+        description: Bet result (win or loss)
+        constraints:
+          - type: not_null
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['win', 'loss']
+
+  - name: stg_player_profiles
+    description: |
+      Staging layer for raw player accounts with data contract enforcement.
+
+      Data Quality Rules:
+      - All players must have a valid player_id (player_id IS NOT NULL)
+      - State jurisdictions standardized to uppercase and trimmed
+      - Risk cohorts standardized to uppercase and trimmed
+
+      Source: raw.player_accounts
+
+    config:
+      contract:
+        enforced: true
+
+    columns:
+      - name: player_id
+        data_type: varchar
+        description: "Unique player identifier (format: PLR_####_{STATE})"
+        constraints:
+          - type: not_null
+          - type: unique
+        tests:
+          - not_null
+          - unique
+
+      - name: first_name
+        data_type: varchar
+        description: Player first name
+
+      - name: last_name
+        data_type: varchar
+        description: Player last name
+
+      - name: email
+        data_type: varchar
+        description: Player email address
+
+      - name: age
+        data_type: integer
+        description: Player age (21-75, legal betting age)
+
+      - name: state_jurisdiction
+        data_type: varchar
+        description: |
+          Player state jurisdiction, standardized to uppercase.
+          Valid values: MA, NJ, PA
+        constraints:
+          - type: not_null
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['MA', 'NJ', 'PA']
+
+      - name: risk_cohort
+        data_type: varchar
+        description: |
+          Player risk classification, standardized to uppercase.
+          Valid values: LOW_RISK, MEDIUM_RISK, HIGH_RISK, CRITICAL
+        constraints:
+          - type: not_null
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['LOW_RISK', 'MEDIUM_RISK', 'HIGH_RISK', 'CRITICAL']
+
+  - name: stg_gamalyze_scores
+    description: |
+      Staging layer for Gamalyze neuro-marker assessments with data contract enforcement.
+
+      Data Quality Rules:
+      - All assessments must have valid assessment_id AND player_id
+      - Score columns cast to DECIMAL(5,2) for consistent precision
+      - All scores expected to be in 0-100 range
+
+      Source: raw.gamalyze_assessments
+
+    config:
+      contract:
+        enforced: true
+
+    columns:
+      - name: assessment_id
+        data_type: varchar
+        description: Unique assessment identifier
+        constraints:
+          - type: not_null
+          - type: unique
+        tests:
+          - not_null
+          - unique
+
+      - name: player_id
+        data_type: varchar
+        description: "Foreign key to player_accounts table (format: PLR_####_{STATE})"
+        constraints:
+          - type: not_null
+        tests:
+          - not_null
+          - relationships:
+              to: source('raw', 'player_accounts')
+              field: player_id
+
+      - name: assessment_date
+        data_type: date
+        description: Date of Gamalyze assessment
+        constraints:
+          - type: not_null
+        tests:
+          - not_null
+
+      - name: sensitivity_to_loss
+        data_type: decimal(5,2)
+        description: |
+          Neuro-marker score (0-100) - reaction to losses.
+          Higher scores indicate greater sensitivity.
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      - name: sensitivity_to_reward
+        data_type: decimal(5,2)
+        description: |
+          Neuro-marker score (0-100) - reaction to wins.
+          Higher scores indicate greater sensitivity.
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      - name: risk_tolerance
+        data_type: decimal(5,2)
+        description: |
+          Neuro-marker score (0-100) - willingness to accept risk.
+          Higher scores indicate greater risk tolerance.
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      - name: decision_consistency
+        data_type: decimal(5,2)
+        description: |
+          Neuro-marker score (0-100) - ability to make consistent decisions.
+          Higher scores indicate more consistent decision-making.
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
+              inclusive: true
+
+      - name: gamalyze_version
+        data_type: varchar
+        description: Version of Gamalyze assessment tool used
