@@ -76,6 +76,25 @@ Validates a proposed customer nudge for compliance.
 ### GET `/api/ai/logs/{player_id}`
 Returns prompt/response logs for a player for transparency review.
 
+### POST `/api/ai/query-draft`
+Drafts a read-only SQL query to support analyst investigation workflows.
+
+**Request**
+```json
+{
+  "player_id": "PLR_1234_MA",
+  "analyst_prompt": "Show the last 30 bets placed between 2–6 AM."
+}
+```
+
+**Response**
+```json
+{
+  "draft_sql": "SELECT bet_id, bet_timestamp, bet_amount FROM STAGING.STG_BET_LOGS WHERE player_id = 'PLR_1234_MA' AND EXTRACT(HOUR FROM bet_timestamp) BETWEEN 2 AND 6 ORDER BY bet_timestamp DESC LIMIT 30",
+  "assumptions": ["BET_LOGS timestamps are stored in ET."]
+}
+```
+
 ---
 
 ## Run Locally

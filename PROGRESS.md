@@ -127,4 +127,23 @@
 
 ---
 
-[Continue through Week 8]
+## Week 8: Case File (HITL + AI + SQL) ✓ COMPLETE
+
+**Delivered**:
+- Full-page Case File view inside Audit Trail tab (Medium/High/Critical only)
+- Hybrid SQL assistant (LLM draft → analyst edit → log)
+- Query log + unified timeline (notes + AI + SQL)
+- Client-side PDF export of Case File
+- DuckDB table + FastAPI endpoints for SQL draft + query logging
+- Case lifecycle flow: Start Case Review → Audit Trail workbench → Submit Decision (status persisted)
+- Queue hygiene: active Audit Trail cases are excluded from Queue
+
+**Roadmap Update**:
+- Live data integration moved to Week 9 along with full validation + docs polish.
+
+**Notes**:
+- `npm audit` flags `jspdf`/`vite` issues that require breaking upgrades. Deferred; dev server locked to `127.0.0.1` for mitigation.
+
+---
+
+[Continue through Week 9]

@@ -8,7 +8,7 @@ interface LayoutShellProps {
 }
 
 export const LayoutShell = ({ title, subtitle, children }: LayoutShellProps) => (
-  <div className="relative min-h-screen overflow-hidden px-6 py-10">
+  <div className="relative min-h-screen overflow-x-hidden overflow-y-visible px-6 py-10">
     <div className="pointer-events-none absolute inset-0">
       <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-[#53B848]/20 blur-[120px]" />
       <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-[#F3701B]/15 blur-[140px]" />

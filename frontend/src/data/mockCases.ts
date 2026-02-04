@@ -79,7 +79,12 @@ export const mockCaseDetails: CaseDetail[] = [
     draft_nudge:
       'We noticed some unusual patterns in your recent play and want to make sure you are staying in control. You can choose to review tools in the Responsible Gaming Center at rg.draftkings.com. We are here to support you.',
     regulatory_notes: 'MA abnormal-play review completed; no 10x average trigger observed.',
-    analyst_actions: ['Immediate outreach', 'Consider temporary limits', 'Documented in audit trail']
+    analyst_actions: [
+      'Provide Responsible Gaming Resources (RG Center)',
+      'Offer Player Limits (Deposit/Wager/Time)',
+      'Offer Cool Off Period',
+      'Offer Self-Exclusion'
+    ]
   },
   {
     case_id: 'CASE-1002',
@@ -102,7 +107,10 @@ export const mockCaseDetails: CaseDetail[] = [
     draft_nudge:
       'We want to ensure your play stays safe. You can choose to set limits or explore support tools in the Responsible Gaming Center at rg.draftkings.com.',
     regulatory_notes: 'NJ multi-flag review pending; no 3+ flag trigger in last 30 days.',
-    analyst_actions: ['Queue for follow-up', 'Monitor for additional flags']
+    analyst_actions: [
+      'Monitor & Document',
+      'Provide Responsible Gaming Resources (RG Center)'
+    ]
   },
   {
     case_id: 'CASE-1003',
@@ -125,7 +133,10 @@ export const mockCaseDetails: CaseDetail[] = [
     draft_nudge:
       'We are here to support healthy play. You can choose to review limits and tools in the Responsible Gaming Center at rg.draftkings.com.',
     regulatory_notes: 'PA referral trigger not met (no 3+ exclusions).',
-    analyst_actions: ['Schedule check-in', 'Document in audit trail']
+    analyst_actions: [
+      'Offer Cool Off Period',
+      'Monitor & Document'
+    ]
   },
   {
     case_id: 'CASE-1004',
@@ -148,7 +159,10 @@ export const mockCaseDetails: CaseDetail[] = [
     draft_nudge:
       'We want to make sure you have the support you need. You can choose to explore tools in the Responsible Gaming Center at rg.draftkings.com.',
     regulatory_notes: 'MA abnormal-play trigger not met.',
-    analyst_actions: ['Send supportive nudge', 'Monitor weekly trend']
+    analyst_actions: [
+      'Provide Responsible Gaming Resources (RG Center)',
+      'Monitor & Document'
+    ]
   },
   {
     case_id: 'CASE-1005',
@@ -171,7 +185,9 @@ export const mockCaseDetails: CaseDetail[] = [
     draft_nudge:
       'You can choose to check in on your play and set limits in the Responsible Gaming Center at rg.draftkings.com.',
     regulatory_notes: 'NJ 30-day multi-flag threshold not met.',
-    analyst_actions: ['Monitor in queue', 'No immediate action']
+    analyst_actions: [
+      'Monitor & Document'
+    ]
   },
   {
     case_id: 'CASE-1006',
@@ -194,7 +210,9 @@ export const mockCaseDetails: CaseDetail[] = [
     draft_nudge:
       'We are here to support safe play. You can choose to explore tools in the Responsible Gaming Center at rg.draftkings.com.',
     regulatory_notes: 'No PA triggers met.',
-    analyst_actions: ['No action required']
+    analyst_actions: [
+      'Monitor & Document'
+    ]
   }
 ];
 
@@ -217,6 +235,7 @@ export const mockAnalyticsSummary: AnalyticsSummary = {
 export const mockAuditTrail: AuditEntry[] = [
   {
     audit_id: 'AUD-4001',
+    case_id: 'CASE-1001',
     player_id: 'PLR_1024_MA',
     analyst_id: 'Colby Reichenbach',
     action: 'Immediate outreach',
@@ -227,6 +246,7 @@ export const mockAuditTrail: AuditEntry[] = [
   },
   {
     audit_id: 'AUD-4002',
+    case_id: 'CASE-1002',
     player_id: 'PLR_2331_NJ',
     analyst_id: 'Colby Reichenbach',
     action: 'Monitor and follow-up',
@@ -237,6 +257,7 @@ export const mockAuditTrail: AuditEntry[] = [
   },
   {
     audit_id: 'AUD-4003',
+    case_id: 'CASE-1004',
     player_id: 'PLR_4109_MA',
     analyst_id: 'Colby Reichenbach',
     action: 'Send supportive nudge',

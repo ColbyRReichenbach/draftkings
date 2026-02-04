@@ -17,6 +17,7 @@ from ai_services.openai_provider import OpenAIProvider
 from ai_services.semantic_auditor import BehavioralSemanticAuditor
 from backend.db.duckdb_client import ensure_tables
 from backend.routers import ai as ai_router
+from backend.routers import cases as cases_router
 from backend.routers import interventions as interventions_router
 
 logging.basicConfig(
@@ -60,6 +61,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     config = LLMConfig()
     provider = _build_provider(config)
+    app.state.llm_config = config
+    app.state.llm_provider = provider
     app.state.semantic_auditor = (
         BehavioralSemanticAuditor(provider=provider, config=config) if provider else None
     )
@@ -103,3 +106,4 @@ async def health_check() -> dict[str, str]:
 
 app.include_router(ai_router.router, prefix="/api/ai", tags=["AI"])
 app.include_router(interventions_router.router, prefix="/api/interventions", tags=["Interventions"])
+app.include_router(cases_router.router, prefix="/api/cases", tags=["Cases"])

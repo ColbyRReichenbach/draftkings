@@ -14,6 +14,13 @@ export const useCaseDetail = (caseId: string | null) =>
     enabled: Boolean(caseId)
   });
 
+export const useCaseDetailByPlayer = (playerId: string | null) =>
+  useQuery({
+    queryKey: ['case-detail-player', playerId],
+    queryFn: () => (playerId ? mockClient.getCaseDetailByPlayer(playerId) : Promise.resolve(null)),
+    enabled: Boolean(playerId)
+  });
+
 export const useAnalyticsSummary = () =>
   useQuery({
     queryKey: ['analytics-summary'],

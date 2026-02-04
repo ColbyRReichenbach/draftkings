@@ -17,6 +17,10 @@ export const mockClient = {
     await delay(120);
     return mockCaseDetails.find((detail) => detail.case_id === caseId) ?? null;
   },
+  async getCaseDetailByPlayer(playerId: string): Promise<CaseDetail | null> {
+    await delay(120);
+    return mockCaseDetails.find((detail) => detail.player_id === playerId) ?? null;
+  },
   async getAnalyticsSummary(): Promise<AnalyticsSummary> {
     await delay(180);
     return mockAnalyticsSummary;

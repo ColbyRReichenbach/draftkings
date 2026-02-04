@@ -1,52 +1,31 @@
-import { useEffect, useMemo, useState } from 'react';
-import { CaseDetail } from '../types/risk';
+import { CaseDetail, CaseStatusEntry } from '../types/risk';
 import { ScoreBreakdown } from './ScoreBreakdown';
 import { NudgePreview } from './NudgePreview';
 import { ActionBar } from './ActionBar';
 import { PromptLogPanel } from './PromptLogPanel';
 import { useNudgeValidation, usePromptLogs, useSemanticAudit } from '../hooks/useAi';
-import { useAnalystNotes, useSubmitAnalystNotes } from '../hooks/useAnalystNotes';
+import { useStartCase } from '../hooks/useCaseTimeline';
+import { useUiStore } from '../state/useUiStore';
+import { useQueryClient } from '@tanstack/react-query';
+
+const DEFAULT_ANALYST_ID = 'Colby Reichenbach';
 
 interface CaseDetailPanelProps {
   detail: CaseDetail | null;
 }
 
-const ACTION_OPTIONS = [
-  'Monitor',
-  'Supportive nudge',
-  'Outreach call',
-  'Temporary limit',
-  'Account review',
-  'No action'
-];
-
 export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
   const semanticAudit = useSemanticAudit();
   const nudgeValidation = useNudgeValidation();
   const promptLogs = usePromptLogs(detail?.player_id ?? null);
-  const notesQuery = useAnalystNotes(detail?.player_id ?? null);
-  const submitNotes = useSubmitAnalystNotes();
-
-  const [notes, setNotes] = useState('');
-  const [action, setAction] = useState('');
-
-  useEffect(() => {
-    if (notesQuery.data) {
-      setNotes(notesQuery.data.analyst_notes);
-      setAction(notesQuery.data.analyst_action);
-    } else {
-      setNotes('');
-      setAction('');
-    }
-  }, [notesQuery.data]);
-
-  const canSubmit = notes.trim().length >= 10 && action.length > 0 && detail;
+  const startCase = useStartCase();
+  const setActiveTab = useUiStore((state) => state.setActiveTab);
+  const setActiveAuditPlayerId = useUiStore((state) => state.setActiveAuditPlayerId);
+  const reactQuery = useQueryClient();
 
   const explanation = semanticAudit.data?.explanation ?? detail?.ai_explanation ?? '';
   const regulatoryNotes = semanticAudit.data?.regulatory_notes ?? detail?.regulatory_notes ?? '';
   const nudgeText = semanticAudit.data?.draft_customer_nudge ?? detail?.draft_nudge ?? '';
-
-  const lastSaved = useMemo(() => notesQuery.data?.created_at, [notesQuery.data]);
 
   const handleGenerateExplanation = () => {
     if (!detail) {
@@ -71,16 +50,43 @@ export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
     nudgeValidation.mutate(nudgeText);
   };
 
-  const handleSubmitNotes = () => {
-    if (!detail || !canSubmit) {
+  const handleStartCase = () => {
+    if (!detail) {
       return;
     }
-    submitNotes.mutate({
+    const optimisticStatus = {
+      case_id: detail.case_id,
       player_id: detail.player_id,
-      analyst_id: 'Colby Reichenbach',
-      analyst_action: action,
-      analyst_notes: notes.trim()
+      analyst_id: DEFAULT_ANALYST_ID,
+      status: 'IN_PROGRESS' as const,
+      started_at: new Date().toISOString(),
+      submitted_at: null,
+      updated_at: new Date().toISOString()
+    };
+    reactQuery.setQueryData(['case-statuses'], (prev: CaseStatusEntry[] | undefined) => {
+      const next = prev ? [...prev] : [];
+      const existingIndex = next.findIndex((row) => row.case_id === detail.case_id);
+      if (existingIndex >= 0) {
+        next[existingIndex] = optimisticStatus;
+      } else {
+        next.push(optimisticStatus);
+      }
+      return next;
     });
+    setActiveAuditPlayerId(detail.player_id);
+    setActiveTab('audit');
+    startCase.mutate(
+      {
+        case_id: detail.case_id,
+        player_id: detail.player_id,
+        analyst_id: DEFAULT_ANALYST_ID
+      },
+      {
+        onSuccess: () => {
+          reactQuery.invalidateQueries({ queryKey: ['case-statuses'] });
+        }
+      }
+    );
   };
 
   if (!detail) {
@@ -92,7 +98,7 @@ export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
   }
 
   return (
-    <div className="glass-panel panel-sheen flex flex-col gap-4 rounded-2xl p-6">
+    <div className="glass-panel panel-sheen flex flex-col gap-4 overflow-visible rounded-2xl p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Case Detail</p>
@@ -101,8 +107,23 @@ export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
             {detail.case_id} • {detail.state_jurisdiction}
           </p>
         </div>
-        <div className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-100">
-          Score {(detail.composite_risk_score * 100).toFixed(0)}%
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-100">
+            Score {(detail.composite_risk_score * 100).toFixed(0)}%
+          </div>
+          <span className="group relative inline-flex items-center">
+            <button
+              type="button"
+              onClick={handleStartCase}
+              disabled={startCase.isPending}
+              className="hover-lift rounded-xl border border-slate-700 bg-[#F3701B] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-black disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+            >
+              {startCase.isPending ? 'Starting...' : 'Start Case Review'}
+            </button>
+            <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-64 -translate-x-1/2 rounded-xl border border-slate-700 bg-slate-950/95 p-2 text-[11px] text-slate-200 opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100">
+              Starts an audit trail workbench entry for analyst notes, SQL, and AI logs.
+            </span>
+          </span>
         </div>
       </div>
 
@@ -133,6 +154,16 @@ export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
       </div>
 
       <ScoreBreakdown detail={detail} />
+
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          Analyst Guidance (AI Assist)
+        </p>
+        <p className="mt-2 text-sm text-slate-300">
+          Review independent signals before escalating. Use the Case File to document
+          rationale, SQL evidence, and final decision.
+        </p>
+      </div>
 
       <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">AI Actions</p>
@@ -167,49 +198,6 @@ export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
         validationResult={nudgeValidation.data ?? null}
         isValidating={nudgeValidation.isPending}
       />
-
-      <div className="panel-sheen rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Analyst Notes</p>
-        <textarea
-          value={notes}
-          onChange={(event) => setNotes(event.target.value)}
-          placeholder="Document rationale, evidence reviewed, and decision context..."
-          className="mt-3 h-28 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-[#53B848] focus:outline-none"
-        />
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <select
-            value={action}
-            onChange={(event) => setAction(event.target.value)}
-            className="rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100"
-          >
-            <option value="" disabled>
-              Select action
-            </option>
-            {ACTION_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={handleSubmitNotes}
-            disabled={!canSubmit || submitNotes.isPending}
-            className="hover-lift rounded-xl border border-slate-700 bg-[#53B848] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-black disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
-          >
-            {submitNotes.isPending ? 'Saving...' : 'Submit Decision'}
-          </button>
-          {submitNotes.isSuccess ? (
-            <span className="text-xs text-emerald-300">Saved.</span>
-          ) : null}
-          {submitNotes.isError ? (
-            <span className="text-xs text-red-300">Save failed.</span>
-          ) : null}
-        </div>
-        {lastSaved ? (
-          <p className="mt-2 text-xs text-slate-400">Last saved: {new Date(lastSaved).toLocaleString()}</p>
-        ) : null}
-      </div>
 
       <PromptLogPanel logs={promptLogs.data ?? []} />
 

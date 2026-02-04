@@ -3,29 +3,60 @@ import { QueueFilters } from '../components/QueueFilters';
 import { RiskCaseCard } from '../components/RiskCaseCard';
 import { CaseDetailPanel } from '../components/CaseDetailPanel';
 import { useCaseDetail, useRiskCases } from '../hooks/useRiskCases';
+import { useAuditTrail } from '../hooks/useAuditTrail';
+import { useCaseStatuses } from '../hooks/useCaseTimeline';
 import { useQueueStore } from '../state/useQueueStore';
 
 export const QueuePage = () => {
   const { data: cases = [] } = useRiskCases();
+  const { data: statuses = [] } = useCaseStatuses();
+  const { data: auditEntries = [] } = useAuditTrail();
   const selectedCaseId = useQueueStore((state) => state.selectedCaseId);
   const setSelectedCaseId = useQueueStore((state) => state.setSelectedCaseId);
   const searchTerm = useQueueStore((state) => state.searchTerm.toLowerCase());
   const activeCategories = useQueueStore((state) => state.activeCategories);
 
+  const statusMap = useMemo(() => {
+    const map = new Map<string, string>();
+    statuses.forEach((row) => {
+      map.set(row.case_id, row.status);
+    });
+    return map;
+  }, [statuses]);
+
+  const auditCaseIds = useMemo(() => {
+    const ids = new Set<string>();
+    auditEntries.forEach((entry) => ids.add(entry.case_id));
+    return ids;
+  }, [auditEntries]);
+
   const filteredCases = useMemo(
     () =>
       cases.filter((riskCase) => {
+        if (statusMap.has(riskCase.case_id)) {
+          return false;
+        }
+        if (auditCaseIds.has(riskCase.case_id)) {
+          return false;
+        }
         const matchesSearch =
           riskCase.player_id.toLowerCase().includes(searchTerm) ||
           riskCase.case_id.toLowerCase().includes(searchTerm);
         const matchesCategory = activeCategories.includes(riskCase.risk_category);
         return matchesSearch && matchesCategory;
       }),
-    [cases, searchTerm, activeCategories]
+    [cases, searchTerm, activeCategories, statusMap, auditCaseIds]
   );
 
   useEffect(() => {
-    if (!selectedCaseId && filteredCases.length > 0) {
+    if (filteredCases.length === 0) {
+      if (selectedCaseId) {
+        setSelectedCaseId(null);
+      }
+      return;
+    }
+    const stillValid = filteredCases.some((riskCase) => riskCase.case_id === selectedCaseId);
+    if (!selectedCaseId || !stillValid) {
       setSelectedCaseId(filteredCases[0].case_id);
     }
   }, [filteredCases, selectedCaseId, setSelectedCaseId]);

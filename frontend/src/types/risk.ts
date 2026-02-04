@@ -47,6 +47,7 @@ export interface AnalyticsSummary {
 
 export interface AuditEntry {
   audit_id: string;
+  case_id: string;
   player_id: string;
   analyst_id: string;
   action: string;
@@ -105,4 +106,59 @@ export interface PromptLogEntry {
   prompt_text: string;
   response_text: string;
   created_at: string;
+}
+
+export interface QueryDraftRequest {
+  player_id: string;
+  analyst_prompt: string;
+}
+
+export interface QueryDraftResponse {
+  draft_sql: string;
+  assumptions: string[];
+}
+
+export interface QueryLogEntry {
+  player_id: string;
+  analyst_id: string;
+  prompt_text: string;
+  draft_sql: string;
+  final_sql: string;
+  purpose: string;
+  result_summary: string;
+  created_at: string;
+}
+
+export interface QueryLogRequest {
+  player_id: string;
+  analyst_id: string;
+  prompt_text: string;
+  draft_sql: string;
+  final_sql: string;
+  purpose: string;
+  result_summary: string;
+}
+
+export interface CaseTimelineEntry {
+  event_type: string;
+  event_detail: string;
+  created_at: string;
+}
+
+export type CaseStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED';
+
+export interface CaseStatusRequest {
+  case_id: string;
+  player_id: string;
+  analyst_id: string;
+}
+
+export interface CaseStatusEntry {
+  case_id: string;
+  player_id: string;
+  analyst_id: string;
+  status: CaseStatus;
+  started_at: string | null;
+  submitted_at: string | null;
+  updated_at: string;
 }

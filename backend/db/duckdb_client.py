@@ -79,6 +79,34 @@ def ensure_tables(db_path: str | None = None) -> None:
             )
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS rg_query_log (
+                log_id VARCHAR,
+                player_id VARCHAR,
+                analyst_id VARCHAR,
+                prompt_text VARCHAR,
+                draft_sql VARCHAR,
+                final_sql VARCHAR,
+                purpose VARCHAR,
+                result_summary VARCHAR,
+                created_at TIMESTAMP
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS rg_case_status_log (
+                case_id VARCHAR,
+                player_id VARCHAR,
+                analyst_id VARCHAR,
+                status VARCHAR,
+                started_at TIMESTAMP,
+                submitted_at TIMESTAMP,
+                updated_at TIMESTAMP
+            )
+            """
+        )
 
 
 def query_rows(
