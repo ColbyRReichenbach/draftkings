@@ -1,4 +1,9 @@
-import { NudgeValidationResult, RiskExplanationRequest, RiskExplanationResponse } from '../types/risk';
+import {
+  NudgeValidationResult,
+  PromptLogEntry,
+  RiskExplanationRequest,
+  RiskExplanationResponse
+} from '../types/risk';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
 
@@ -26,5 +31,9 @@ export const aiClient = {
     request<NudgeValidationResult>('/api/ai/validate-nudge', {
       method: 'POST',
       body: JSON.stringify({ nudge_text: nudgeText })
+    }),
+  getPromptLogs: (playerId: string) =>
+    request<PromptLogEntry[]>(`/api/ai/logs/${playerId}`, {
+      method: 'GET'
     })
 };

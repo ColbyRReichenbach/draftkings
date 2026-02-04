@@ -1,4 +1,4 @@
-# LLM Integration (Week 5)
+# LLM Integration (Week 5+)
 
 ## Overview
 OpenAI-first LLM integration for semantic risk explanations and compliant customer nudges.
@@ -10,6 +10,7 @@ OpenAI-first LLM integration for semantic risk explanations and compliant custom
 - `LLM_TEMPERATURE` (default: `0.3`)
 - `LLM_MAX_TOKENS` (default: `1500`)
 - `OPENAI_API_KEY` (required for runtime)
+- `ANALYST_NAME` (default: `Colby Reichenbach`)
 
 ## Model Selection (Defaults)
 - **Fast / volume**: `gpt-4o-mini` (cheap, long context, good for high-throughput tasks)
@@ -22,7 +23,8 @@ OpenAI-first LLM integration for semantic risk explanations and compliant custom
 ## Endpoints
 
 ### POST `/api/ai/semantic-audit`
-Generates a structured, audit-ready explanation of a player’s risk profile.
+Generates a structured, audit-ready explanation of a player’s risk profile and logs
+prompt + output to `rg_llm_prompt_log` for transparency.
 
 **Request**
 ```json
@@ -70,6 +72,11 @@ Validates a proposed customer nudge for compliance.
   "violations": []
 }
 ```
+
+### GET `/api/ai/logs/{player_id}`
+Returns prompt/response logs for a player for transparency review.
+
+---
 
 ## Run Locally
 ```bash

@@ -113,4 +113,18 @@
 
 ---
 
+## Week 7: HITL-First UI + AI Assist ✓ COMPLETE
+
+**Delivered**:
+- Updated AI button copy to “Draft AI Summary” (assistive framing)
+- Analyst notes panel with action selection + submit workflow
+- LLM transparency log (prompt + output history)
+- DuckDB-backed endpoints for notes and prompt logging
+- AI endpoint guardrails (503 if key missing)
+
+**Roadmap Update**:
+- Live data integration moved to Week 8 alongside final validation and docs.
+
+---
+
 [Continue through Week 8]

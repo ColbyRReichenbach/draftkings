@@ -83,3 +83,26 @@ export interface NudgeValidationResult {
   is_valid: boolean;
   violations: string[];
 }
+
+export interface AnalystNoteRequest {
+  player_id: string;
+  analyst_id: string;
+  analyst_action: string;
+  analyst_notes: string;
+}
+
+export interface AnalystNoteResponse {
+  player_id: string;
+  analyst_id: string;
+  analyst_action: string;
+  analyst_notes: string;
+  created_at: string;
+}
+
+export interface PromptLogEntry {
+  player_id: string;
+  analyst_id: string;
+  prompt_text: string;
+  response_text: string;
+  created_at: string;
+}
