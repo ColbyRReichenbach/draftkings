@@ -25,6 +25,8 @@ dbt_project/dbt_packages/
 # Node/React
 node_modules/
 build/
+frontend/dist/
+frontend/src/components/__tests__/__snapshots__/
 .DS_Store
 
 # IDE
