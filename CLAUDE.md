@@ -182,14 +182,14 @@ npm test
 
 ## Project Status
 
-**Current Phase**: Week 8 complete (Case File + SQL assistant + case lifecycle flow)
+**Current Phase**: Week 9 complete (Live integration + prompt routing + Snowflake-safe SQL)
 - [x] Week 1-2: Data foundation (synthetic generation + Snowflake setup) — Week 1 complete; Week 2 complete
 - [x] Week 3-4: dbt transformations (staging → intermediate → marts) — Week 3 complete; Week 4 complete
 - [x] Week 5: AI integration (semantic auditor + safety validator)
 - [x] Week 6: Dashboard foundation (React components + mock data + tabs)
 - [x] Week 7: HITL-first UI + AI assist (analyst notes + LLM transparency)
 - [x] Week 8: Case File (HITL + AI + SQL + lifecycle flow)
-- [ ] Week 9: Integration, testing & documentation
+- [x] Week 9: Integration, testing & documentation
 
 **Recent Lessons** (Most Recent First):
 - 2026-02-03: Always record regulatory trigger checks alongside composite-score selections in HITL reviews.

@@ -167,8 +167,13 @@ async def start_case(
     """Mark a case as in progress."""
     now = datetime.utcnow().isoformat()
     execute(
+        "DELETE FROM rg_case_status_log WHERE case_id = ?",
+        (payload.case_id,),
+        db_path=db_path,
+    )
+    execute(
         """
-        INSERT OR REPLACE INTO rg_case_status_log (
+        INSERT INTO rg_case_status_log (
             case_id,
             player_id,
             analyst_id,
@@ -208,8 +213,13 @@ async def submit_case(
     """Mark a case as submitted."""
     now = datetime.utcnow().isoformat()
     execute(
+        "DELETE FROM rg_case_status_log WHERE case_id = ?",
+        (payload.case_id,),
+        db_path=db_path,
+    )
+    execute(
         """
-        INSERT OR REPLACE INTO rg_case_status_log (
+        INSERT INTO rg_case_status_log (
             case_id,
             player_id,
             analyst_id,

@@ -75,9 +75,17 @@ def ensure_tables(db_path: str | None = None) -> None:
                 analyst_id VARCHAR,
                 prompt_text VARCHAR,
                 response_text VARCHAR,
-                created_at TIMESTAMP
+                created_at TIMESTAMP,
+                route_type VARCHAR,
+                tool_used VARCHAR
             )
             """
+        )
+        conn.execute(
+            "ALTER TABLE rg_llm_prompt_log ADD COLUMN IF NOT EXISTS route_type VARCHAR"
+        )
+        conn.execute(
+            "ALTER TABLE rg_llm_prompt_log ADD COLUMN IF NOT EXISTS tool_used VARCHAR"
         )
         conn.execute(
             """

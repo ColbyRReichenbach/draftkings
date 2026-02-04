@@ -29,4 +29,6 @@ class PromptLogEntry(BaseModel):
     analyst_id: str
     prompt_text: str
     response_text: str
+    route_type: str | None = None
+    tool_used: str | None = None
     created_at: str

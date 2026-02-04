@@ -146,4 +146,22 @@
 
 ---
 
-[Continue through Week 9]
+## Week 9: Live Integration + Prompt Routing ✓ COMPLETE
+
+**Delivered**:
+- Live API integration for Queue, Case Detail, Audit Trail, and Case File (mock data removed for those views)
+- Prompt router with routing transparency (SQL Draft vs Regulatory vs External vs General)
+- Snowflake-safe SQL enforcement for drafted queries
+- Route + tool logging added to LLM transparency log
+- Updated UI to show router decisions and Snowflake-only guidance
+
+**Validation**:
+- `pytest` (router + snowflake validator)
+- `npm test` (UI + routing panel)
+
+**Roadmap Update**:
+- Portfolio polish and final packaging remain as optional post-Week 9 enhancements.
+
+---
+
+[Continue through Week 10 if needed]

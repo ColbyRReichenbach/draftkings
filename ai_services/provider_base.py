@@ -18,3 +18,15 @@ class LLMProvider(ABC):
     ) -> Dict[str, Any]:
         """Generate a JSON response from a prompt."""
         raise NotImplementedError
+
+    @abstractmethod
+    def generate_text(
+        self,
+        prompt: str,
+        model: str,
+        temperature: float,
+        max_tokens: int,
+        system_prompt: str | None = None,
+    ) -> str:
+        """Generate a plain text response from a prompt."""
+        raise NotImplementedError

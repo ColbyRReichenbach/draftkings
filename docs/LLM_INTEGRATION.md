@@ -76,8 +76,36 @@ Validates a proposed customer nudge for compliance.
 ### GET `/api/ai/logs/{player_id}`
 Returns prompt/response logs for a player for transparency review.
 
+### POST `/api/ai/router`
+Routes analyst prompts to SQL Draft, Regulatory Context, External Context, or General Analysis.
+All routes are logged with `route_type` and `tool_used` for transparency.
+
+**Request**
+```json
+{
+  "player_id": "PLR_1234_MA",
+  "analyst_prompt": "Show the last 30 bets placed between 2–6 AM."
+}
+```
+
+**Response**
+```json
+{
+  "route": "SQL_DRAFT",
+  "tool": "query-draft",
+  "reasoning": "Routed based on prompt intent keywords.",
+  "model_used": "gpt-4o-mini",
+  "draft_sql": "SELECT ...",
+  "assumptions": ["Assumption 1"]
+}
+```
+
 ### POST `/api/ai/query-draft`
 Drafts a read-only SQL query to support analyst investigation workflows.
+
+**Snowflake constraints**
+- Enforces Snowflake-compatible syntax (DATEADD, DATEDIFF, DATE_TRUNC, ILIKE, QUALIFY)
+- Rejects non-Snowflake patterns (`INTERVAL`, `::`, `DATE_SUB`, `REGEXP_MATCH`, `IFNULL`)
 
 **Request**
 ```json

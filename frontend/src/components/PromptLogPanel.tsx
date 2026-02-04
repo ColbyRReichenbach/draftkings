@@ -19,6 +19,20 @@ export const PromptLogPanel = ({ logs }: PromptLogPanelProps) => (
               <span>Analyst: {log.analyst_id}</span>
               <span>{new Date(log.created_at).toLocaleString()}</span>
             </div>
+            {(log.route_type || log.tool_used) ? (
+              <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-400">
+                {log.route_type ? (
+                  <span className="rounded-full border border-slate-700 px-2 py-0.5">
+                    Route: {log.route_type}
+                  </span>
+                ) : null}
+                {log.tool_used ? (
+                  <span className="rounded-full border border-slate-700 px-2 py-0.5">
+                    Tool: {log.tool_used}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
             <details className="mt-2">
               <summary className="cursor-pointer text-xs font-semibold text-slate-300">
                 Prompt Used

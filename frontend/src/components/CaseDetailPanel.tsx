@@ -23,7 +23,7 @@ export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
   const setActiveAuditPlayerId = useUiStore((state) => state.setActiveAuditPlayerId);
   const reactQuery = useQueryClient();
 
-  const explanation = semanticAudit.data?.explanation ?? detail?.ai_explanation ?? '';
+  const explanation = semanticAudit.data?.explanation ?? '';
   const regulatoryNotes = semanticAudit.data?.regulatory_notes ?? detail?.regulatory_notes ?? '';
   const nudgeText = semanticAudit.data?.draft_customer_nudge ?? detail?.draft_nudge ?? '';
 
@@ -148,7 +148,11 @@ export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
           </div>
           <div className="rounded-xl bg-slate-950/60 p-3">
             <p className="text-xs text-slate-400">AI Summary</p>
-            <p className="text-sm text-slate-300">{explanation}</p>
+            <p className="text-sm text-slate-300">
+              {explanation
+                ? explanation
+                : 'No AI summary yet. Click “Draft AI Summary” to generate a draft.'}
+            </p>
           </div>
         </div>
       </div>

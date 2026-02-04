@@ -105,7 +105,24 @@ export interface PromptLogEntry {
   analyst_id: string;
   prompt_text: string;
   response_text: string;
+  route_type?: string | null;
+  tool_used?: string | null;
   created_at: string;
+}
+
+export interface PromptRouteRequest {
+  player_id: string;
+  analyst_prompt: string;
+}
+
+export interface PromptRouteResponse {
+  route: string;
+  tool: string;
+  reasoning: string;
+  model_used: string | null;
+  response_text?: string | null;
+  draft_sql?: string | null;
+  assumptions?: string[] | null;
 }
 
 export interface QueryDraftRequest {

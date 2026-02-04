@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { mockClient } from '../api/mockClient';
+import { riskClient } from '../api/riskClient';
 
 export const useAuditTrail = () =>
   useQuery({
     queryKey: ['audit-trail'],
-    queryFn: () => mockClient.getAuditTrail()
+    queryFn: () => riskClient.getAuditTrail()
   });

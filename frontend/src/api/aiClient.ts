@@ -1,5 +1,7 @@
 import {
   NudgeValidationResult,
+  PromptRouteRequest,
+  PromptRouteResponse,
   PromptLogEntry,
   RiskExplanationRequest,
   RiskExplanationResponse
@@ -35,5 +37,10 @@ export const aiClient = {
   getPromptLogs: (playerId: string) =>
     request<PromptLogEntry[]>(`/api/ai/logs/${playerId}`, {
       method: 'GET'
+    }),
+  routePrompt: (payload: PromptRouteRequest) =>
+    request<PromptRouteResponse>('/api/ai/router', {
+      method: 'POST',
+      body: JSON.stringify(payload)
     })
 };

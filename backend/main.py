@@ -18,6 +18,7 @@ from ai_services.semantic_auditor import BehavioralSemanticAuditor
 from backend.db.duckdb_client import ensure_tables
 from backend.routers import ai as ai_router
 from backend.routers import cases as cases_router
+from backend.routers import data as data_router
 from backend.routers import interventions as interventions_router
 
 logging.basicConfig(
@@ -107,3 +108,4 @@ async def health_check() -> dict[str, str]:
 app.include_router(ai_router.router, prefix="/api/ai", tags=["AI"])
 app.include_router(interventions_router.router, prefix="/api/interventions", tags=["Interventions"])
 app.include_router(cases_router.router, prefix="/api/cases", tags=["Cases"])
+app.include_router(data_router.router, prefix="/api", tags=["Data"])

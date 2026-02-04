@@ -8,6 +8,7 @@ import { usePromptLogs } from '../hooks/useAi';
 import { useCaseTimeline, useSubmitCase } from '../hooks/useCaseTimeline';
 import { useCreateQueryLog, useQueryLog } from '../hooks/useQueryLog';
 import { useQueryDraft } from '../hooks/useQueryDraft';
+import { usePromptRouter } from '../hooks/usePromptRouter';
 import { PromptLogPanel } from '../components/PromptLogPanel';
 import { RISK_STYLES } from '../styles/theme';
 import { useQueryClient } from '@tanstack/react-query';
@@ -50,12 +51,14 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
   const queryLogs = useQueryLog(entry.player_id);
   const timeline = useCaseTimeline(entry.player_id);
   const queryDraft = useQueryDraft();
+  const promptRouter = usePromptRouter();
   const createQueryLog = useCreateQueryLog();
   const reactQuery = useQueryClient();
 
   const [notes, setNotes] = useState('');
   const [action, setAction] = useState('');
   const [prompt, setPrompt] = useState('');
+  const [routerPrompt, setRouterPrompt] = useState('');
   const [draftSql, setDraftSql] = useState('');
   const [finalSql, setFinalSql] = useState('');
   const [purpose, setPurpose] = useState('');
@@ -121,6 +124,26 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
       return;
     }
     queryDraft.mutate({ player_id: entry.player_id, analyst_prompt: prompt.trim() });
+  };
+
+  const handleRoutePrompt = () => {
+    if (!isInProgress || routerPrompt.trim().length < 8) {
+      return;
+    }
+    promptRouter.mutate(
+      {
+        player_id: entry.player_id,
+        analyst_prompt: routerPrompt.trim()
+      },
+      {
+        onSuccess: (data) => {
+          if (data.route === 'SQL_DRAFT' && data.draft_sql) {
+            setFinalSql(data.draft_sql);
+            setPrompt(routerPrompt.trim());
+          }
+        }
+      }
+    );
   };
 
   const handleLogQuery = () => {
@@ -814,6 +837,56 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
         <PromptLogPanel logs={promptLogs.data ?? []} />
 
         <div className="glass-panel panel-sheen rounded-2xl p-5">
+          <p className="border-l-[3px] border-[#53B848] pl-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Analyst Prompt Router
+          </p>
+          <textarea
+            value={routerPrompt}
+            onChange={(event) => setRouterPrompt(event.target.value)}
+            placeholder="Ask a question (SQL, regulatory, or external context)."
+            readOnly={!isInProgress}
+            className="mt-3 h-20 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-[#53B848] focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-900"
+          />
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleRoutePrompt}
+              disabled={!isInProgress || routerPrompt.trim().length < 8 || promptRouter.isPending}
+              className="hover-lift rounded-xl border border-slate-700 bg-[#53B848] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-black disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+            >
+              {promptRouter.isPending ? 'Routing...' : 'Route Prompt'}
+            </button>
+            {promptRouter.data ? (
+              <div className="flex flex-wrap gap-2 text-[11px] text-slate-300">
+                <span className="rounded-full border border-slate-700 px-2 py-0.5">
+                  Route: {promptRouter.data.route}
+                </span>
+                <span className="rounded-full border border-slate-700 px-2 py-0.5">
+                  Tool: {promptRouter.data.tool}
+                </span>
+              </div>
+            ) : null}
+          </div>
+          {promptRouter.isError ? (
+            <p className="mt-2 text-xs text-red-300">Router failed. Check API key.</p>
+          ) : null}
+          {promptRouter.data?.reasoning ? (
+            <p className="mt-2 text-xs text-slate-400">{promptRouter.data.reasoning}</p>
+          ) : null}
+          {promptRouter.data?.response_text ? (
+            <div className="mt-3 rounded-xl bg-slate-950/60 p-3 text-xs text-slate-300">
+              {promptRouter.data.response_text}
+            </div>
+          ) : null}
+          {promptRouter.data?.draft_sql ? (
+            <div className="mt-3 rounded-xl bg-slate-950/60 p-3 text-xs text-slate-300">
+              <p className="font-semibold text-slate-200">Draft SQL</p>
+              <pre className="mt-2 whitespace-pre-wrap">{promptRouter.data.draft_sql}</pre>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="glass-panel panel-sheen rounded-2xl p-5">
           <p className="border-l-[3px] border-[#F3701B] pl-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
             SQL Assistant
           </p>
@@ -891,6 +964,7 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
           </div>
           <p className="mt-2 text-xs text-slate-400">
             SQL drafts are assistive only. Analyst review is required before logging.
+            Snowflake SQL only (DATEADD, DATEDIFF, DATE_TRUNC, ILIKE, QUALIFY).
           </p>
         </div>
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 SCHEMA_HINTS = """
-Available tables (DuckDB dev):
+Available tables (DuckDB dev; Snowflake-compatible names):
 
 STAGING.STG_BET_LOGS
 - bet_id, player_id, bet_timestamp, bet_amount, sport_category, market_type,
@@ -28,7 +28,7 @@ def build_query_draft_prompt(player_id: str, analyst_prompt: str) -> str:
     """Build the SQL draft prompt with schema hints."""
     return f"""You are a responsible gaming analytics assistant.
 
-Task: Draft a SINGLE read-only SQL query (SELECT only) in DuckDB dialect.
+Task: Draft a SINGLE read-only SQL query (SELECT only) in Snowflake dialect.
 
 Player ID: {player_id}
 Analyst request: {analyst_prompt}
@@ -47,4 +47,21 @@ Rules:
 - Use explicit column names (no SELECT *)
 - Filter on player_id when relevant
 - Prefer LIMIT when analyst requests a sample size
+- Snowflake-only syntax (DATEADD, DATEDIFF, DATE_TRUNC, ILIKE, QUALIFY)
+- Avoid INTERVAL, :: casts, DATE_SUB, REGEXP_MATCH, IFNULL
+"""
+
+
+def build_router_prompt(route: str, analyst_prompt: str, player_id: str) -> str:
+    """Build prompt routing responses for non-SQL intents."""
+    return f"""You are a responsible gaming analyst assistant.
+
+Route: {route}
+Player ID: {player_id}
+Analyst prompt: {analyst_prompt}
+
+Respond in 3-6 sentences. Be transparent about any limitations:
+- If regulatory context is requested, note that production would use an internal compliance knowledge base.
+- If external context is requested, state that live web access is not enabled in dev.
+- Keep tone professional and supportive.
 """

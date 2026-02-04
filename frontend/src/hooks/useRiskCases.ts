@@ -1,23 +1,25 @@
 import { useQuery } from '@tanstack/react-query';
+import { riskClient } from '../api/riskClient';
 import { mockClient } from '../api/mockClient';
 
 export const useRiskCases = () =>
   useQuery({
     queryKey: ['risk-cases'],
-    queryFn: () => mockClient.getRiskCases()
+    queryFn: () => riskClient.getQueue()
   });
 
 export const useCaseDetail = (caseId: string | null) =>
   useQuery({
     queryKey: ['case-detail', caseId],
-    queryFn: () => (caseId ? mockClient.getCaseDetail(caseId) : Promise.resolve(null)),
+    queryFn: () => (caseId ? riskClient.getCaseDetail(caseId) : Promise.resolve(null)),
     enabled: Boolean(caseId)
   });
 
 export const useCaseDetailByPlayer = (playerId: string | null) =>
   useQuery({
     queryKey: ['case-detail-player', playerId],
-    queryFn: () => (playerId ? mockClient.getCaseDetailByPlayer(playerId) : Promise.resolve(null)),
+    queryFn: () =>
+      playerId ? riskClient.getCaseDetail(`CASE-${playerId}`) : Promise.resolve(null),
     enabled: Boolean(playerId)
   });
 
