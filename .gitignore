@@ -47,3 +47,10 @@ frontend/src/components/__tests__/__snapshots__/
 # Secrets
 *.key
 *.pem
+
+# TypeScript build artifacts
+*.tsbuildinfo
+
+# Vite build artifacts
+vite.config.d.ts
+vite.config.js

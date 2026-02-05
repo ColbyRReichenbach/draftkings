@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { RiskCaseCard } from '../RiskCaseCard';
 import { RiskCase } from '../../types/risk';

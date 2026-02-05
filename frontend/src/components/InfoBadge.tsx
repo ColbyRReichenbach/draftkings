@@ -12,7 +12,6 @@ type TooltipPlacement = 'top' | 'bottom';
 export const InfoBadge = ({ label, className, children }: InfoBadgeProps) => {
   const triggerRef = useRef<HTMLSpanElement | null>(null);
   const [open, setOpen] = useState(false);
-  const [placement, setPlacement] = useState<TooltipPlacement>('bottom');
   const [coords, setCoords] = useState({ left: 0, top: 0 });
 
   const tooltip = useMemo(() => {
@@ -41,7 +40,6 @@ export const InfoBadge = ({ label, className, children }: InfoBadgeProps) => {
     if (!node) return;
     const rect = node.getBoundingClientRect();
     const preferred: TooltipPlacement = window.innerHeight - rect.bottom < 180 ? 'top' : 'bottom';
-    setPlacement(preferred);
     const tooltipWidth = 256;
     const gutter = 12;
     const left = Math.min(
