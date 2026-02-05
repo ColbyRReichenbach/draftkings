@@ -14,6 +14,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os
 import random
 from datetime import datetime, timedelta, date
 
@@ -90,6 +91,11 @@ def _payout(bet_amount: float, odds_american: int, outcome: str) -> float:
 
 def seed_demo_db(db_path: str, player_count: int) -> None:
     random.seed(42)
+
+    # Ensure target directory exists (Render may not have /data yet).
+    db_dir = os.path.dirname(db_path)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
 
     # Risk mix: majority Critical/High/Medium, low fills remainder.
     mix = {
