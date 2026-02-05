@@ -14,6 +14,12 @@ claude
 claude "Review CLAUDE.md and list first 3 development tasks"
 ```
 
+### Demo Data Seed (for hosting)
+Generate a demo DuckDB with a majority of Critical/High/Medium cases:
+```bash
+python scripts/seed_demo_db.py --players 400
+```
+
 ## Project Structure
 ```
 claude/          # Claude Code configuration
