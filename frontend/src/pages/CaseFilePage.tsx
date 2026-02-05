@@ -120,13 +120,13 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
 
   useEffect(() => {
     if (notesQuery.data) {
-      setNotes(notesQuery.data.analyst_notes);
-      setAction(notesQuery.data.analyst_action);
+      setNotes(notesQuery.data.analyst_notes ?? '');
+      setAction(notesQuery.data.analyst_action ?? '');
       return;
     }
     if (draftNotesQuery.data) {
-      setNotes(draftNotesQuery.data.draft_notes);
-      setAction(draftNotesQuery.data.draft_action);
+      setNotes(draftNotesQuery.data.draft_notes ?? '');
+      setAction(draftNotesQuery.data.draft_action ?? '');
     }
   }, [notesQuery.data, draftNotesQuery.data]);
 

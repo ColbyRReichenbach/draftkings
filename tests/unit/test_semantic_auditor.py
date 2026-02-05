@@ -22,6 +22,16 @@ class FakeProvider(LLMProvider):
     ) -> dict:
         return self.payload
 
+    def generate_text(
+        self,
+        prompt: str,
+        model: str,
+        temperature: float,
+        max_tokens: int,
+        system_prompt: str | None = None,
+    ) -> str:
+        return ""
+
 
 def test_generate_risk_explanation_returns_valid_response() -> None:
     payload = {
