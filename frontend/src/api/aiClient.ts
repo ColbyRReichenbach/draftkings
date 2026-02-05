@@ -7,7 +7,10 @@ import {
   RiskExplanationResponse
 } from '../types/risk';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
+const BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ??
+  import.meta.env.VITE_API_URL ??
+  'http://localhost:8000';
 
 const request = async <T>(path: string, options: RequestInit): Promise<T> => {
   const response = await fetch(`${BASE_URL}${path}`, {
