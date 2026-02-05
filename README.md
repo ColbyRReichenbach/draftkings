@@ -33,6 +33,9 @@ docs/             # Documentation
 ## Tech Stack
 - Snowflake (target) + DuckDB (dev) + dbt + Python + FastAPI + React + OpenAI API
 
+## Recruiter Summary
+See `docs/PORTFOLIO_WRITEUP.md` for a concise, recruiter-ready overview of the project.
+
 ## Key Features
 - Persisted analyst queue with lifecycle tracking (Not Started → In Progress → Submitted)
 - Full Case File workbench with HITL notes, SQL evidence, and AI assist transparency
@@ -48,3 +51,11 @@ docs/             # Documentation
 - claude/workflows/ - Step-by-step procedures
 - docs/HITL_REVIEW.md - Completed analyst review with SQL queries
 - docs/WEEK9_REPORT.md - Live integration + analytics + SQL workflow updates
+- docs/PORTFOLIO_WRITEUP.md - Recruiter-ready project summary
+- docs/TECHNICAL_DEEP_DIVE.md - Full technical rationale + AI workflow design
+
+## Portfolio Assets
+Add your final assets here when ready:
+- Live demo link
+- Walkthrough video (2–3 min)
+- Sample PDF report

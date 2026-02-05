@@ -2,11 +2,20 @@
 __pycache__/
 *.py[cod]
 venv/
+.venv/
 .env
+.env.*
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # Generated data (regenerate: python -m data_generation && python scripts/load_to_duckdb.py)
 data/*.csv
 data/test_run/
+data/*.parquet
+data/*.jsonl
 
 # DuckDB
 data/*.duckdb
@@ -28,6 +37,7 @@ build/
 frontend/dist/
 frontend/src/components/__tests__/__snapshots__/
 .DS_Store
+*.log
 
 # IDE
 .vscode/
