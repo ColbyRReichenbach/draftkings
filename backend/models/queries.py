@@ -29,6 +29,10 @@ class QueryLogRequest(BaseModel):
     final_sql: str = Field(..., min_length=10, max_length=8000)
     purpose: str = Field(..., min_length=5, max_length=500)
     result_summary: str = Field(..., min_length=5, max_length=1000)
+    result_columns: list[str] | None = None
+    result_rows: list[list] | None = None
+    row_count: int | None = None
+    duration_ms: int | None = None
 
 
 class QueryLogEntry(BaseModel):
@@ -41,6 +45,10 @@ class QueryLogEntry(BaseModel):
     final_sql: str
     purpose: str
     result_summary: str
+    result_columns: list[str] | None = None
+    result_rows: list[list] | None = None
+    row_count: int | None = None
+    duration_ms: int | None = None
     created_at: str
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from uuid import uuid4
+import json
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -54,8 +55,12 @@ async def create_query_log(
             final_sql,
             purpose,
             result_summary,
+            result_columns,
+            result_rows,
+            row_count,
+            duration_ms,
             created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             log_id,
@@ -66,6 +71,10 @@ async def create_query_log(
             payload.final_sql,
             payload.purpose,
             payload.result_summary,
+            json.dumps(payload.result_columns) if payload.result_columns else None,
+            json.dumps(payload.result_rows) if payload.result_rows else None,
+            payload.row_count,
+            payload.duration_ms,
             created_at,
         ),
         db_path=db_path,
@@ -79,6 +88,10 @@ async def create_query_log(
         final_sql=payload.final_sql,
         purpose=payload.purpose,
         result_summary=payload.result_summary,
+        result_columns=payload.result_columns,
+        result_rows=payload.result_rows,
+        row_count=payload.row_count,
+        duration_ms=payload.duration_ms,
         created_at=created_at,
     )
 
@@ -90,7 +103,8 @@ async def get_query_logs(
     """Return query log entries for a player."""
     rows = query_rows(
         """
-        SELECT player_id, analyst_id, prompt_text, draft_sql, final_sql, purpose, result_summary, created_at
+        SELECT player_id, analyst_id, prompt_text, draft_sql, final_sql, purpose, result_summary,
+               result_columns, result_rows, row_count, duration_ms, created_at
         FROM rg_query_log
         WHERE player_id = ?
         ORDER BY created_at DESC
@@ -108,6 +122,10 @@ async def get_query_logs(
             final_sql=row["final_sql"],
             purpose=row["purpose"],
             result_summary=row["result_summary"],
+            result_columns=json.loads(row["result_columns"]) if row["result_columns"] else None,
+            result_rows=json.loads(row["result_rows"]) if row["result_rows"] else None,
+            row_count=row["row_count"],
+            duration_ms=row["duration_ms"],
             created_at=str(row["created_at"]),
         )
         for row in rows
@@ -216,8 +234,12 @@ def _log_trigger_query(
             final_sql,
             purpose,
             result_summary,
+            result_columns,
+            result_rows,
+            row_count,
+            duration_ms,
             created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             log_id,
@@ -228,6 +250,10 @@ def _log_trigger_query(
             sql_text,
             purpose,
             result_summary,
+            None,
+            None,
+            None,
+            None,
             created_at,
         ),
         db_path=db_path,

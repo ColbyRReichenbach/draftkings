@@ -321,7 +321,11 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
         draft_sql: draftSql.trim() || finalSql.trim(),
         final_sql: finalSql.trim(),
         purpose: purpose.trim(),
-        result_summary: resultSummary.trim() || sqlOutput?.result_summary || 'Query executed.'
+        result_summary: resultSummary.trim() || sqlOutput?.result_summary || 'Query executed.',
+        result_columns: sqlOutput?.columns ?? null,
+        result_rows: sqlOutput?.rows ?? null,
+        row_count: sqlOutput?.row_count ?? null,
+        duration_ms: sqlOutput?.duration_ms ?? null
       },
       {
         onSuccess: () => {
@@ -532,7 +536,7 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
     // ── Page-break helper with footer + new page + header ────────────────
     const getContentTop = (isFirstPage: boolean) =>
       (isFirstPage ? HEADER_HEIGHT_FIRST : HEADER_HEIGHT_OTHER) + CONTENT_PADDING;
-    const contentBottom = pageHeight - FOOTER_RESERVE;
+    const contentBottom = pageHeight - FOOTER_RESERVE - 8;
 
     const ensurePage = (
       neededHeight: number,
@@ -701,11 +705,9 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
     cursorY = ensurePage(90, cursorY, pageNum);
     cursorY = addSectionTitle('Evidence & Log Summary', cursorY);
     const sqlCount = queryLogs.data?.length ?? 0;
-    const aiCount = promptLogs.data?.length ?? 0;
     const timelineCount = timeline.data?.length ?? 0;
     const summaryLines = [
       `SQL evidence logged (${sqlCount} ${sqlCount === 1 ? 'query' : 'queries'}). See Appendix for details.`,
-      `AI prompt activity logged (${aiCount} ${aiCount === 1 ? 'prompt' : 'prompts'}). See Appendix for transcripts.`,
       `Timeline entries logged (${timelineCount}). See Appendix for full timeline.`
     ];
     summaryLines.forEach((line) => {
@@ -741,23 +743,6 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
         cursorY = writeParagraph(log.prompt_text, cursorY);
         cursorY += 10;
 
-        // Draft SQL — code block
-        pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(8);
-        pdf.setTextColor(...DARK_GRAY);
-        pdf.text('Draft SQL', margin, cursorY);
-        cursorY += 14;
-
-        const draftLines = pdf.splitTextToSize(log.draft_sql, contentWidth - 24);
-        const codeBlockH = draftLines.length * 11 + 16;
-        pdf.setFillColor(...LIGHT_GRAY);
-        pdf.roundedRect(margin, cursorY - 4, contentWidth, codeBlockH, 3, 3, 'F');
-        pdf.setFont('courier', 'normal');
-        pdf.setFontSize(7.5);
-        pdf.setTextColor(...DARK_NAVY);
-        pdf.text(draftLines, margin + 12, cursorY + 6);
-        cursorY += codeBlockH + 10;
-
         // Final SQL — code block
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(8);
@@ -773,37 +758,62 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
         pdf.setFontSize(7.5);
         pdf.setTextColor(...DARK_NAVY);
         pdf.text(finalLines, margin + 12, cursorY + 6);
-        cursorY += finalBlockH + 20;
+        cursorY += finalBlockH + 12;
+
+        const outputRows = (log.result_rows ?? []).slice(0, 10);
+        const outputColumns = log.result_columns ?? [];
+        if (outputRows.length && outputColumns.length) {
+          cursorY = ensurePage(140, cursorY + 8, pageNum, appendixSubtitle);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(8);
+          pdf.setTextColor(...DARK_GRAY);
+          pdf.text('SQL Output Preview (top rows)', margin, cursorY);
+          cursorY += 10;
+
+          autoTable(pdf, {
+            startY: cursorY,
+            head: [outputColumns],
+            body: outputRows.map((row) => row.map((cell) => String(cell))),
+            styles: {
+              fontSize: 7,
+              textColor: DARK_GRAY,
+              cellPadding: 4,
+              lineColor: LIGHT_GRAY,
+              lineWidth: 0.5,
+              overflow: 'linebreak'
+            },
+            headStyles: {
+              fillColor: DARK_NAVY,
+              textColor: WHITE,
+              fontStyle: 'bold',
+              fontSize: 7
+            },
+            alternateRowStyles: { fillColor: OFF_WHITE },
+            margin: { left: margin, right: margin, top: getContentTop(false), bottom: FOOTER_RESERVE },
+            didDrawPage: () => {
+              addPageHeader(false, appendixSubtitle);
+            }
+          });
+          cursorY =
+            (pdf as any).lastAutoTable?.finalY ? (pdf as any).lastAutoTable.finalY + 16 : cursorY + 16;
+          cursorY = ensurePage(60, cursorY, pageNum, appendixSubtitle);
+        } else {
+          cursorY = ensurePage(40, cursorY, pageNum, appendixSubtitle);
+          cursorY = writeParagraph('No SQL output snapshot stored for this query.', cursorY);
+          cursorY += 12;
+        }
+
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(8);
+        pdf.setTextColor(...DARK_GRAY);
+        pdf.text('Result Summary', margin, cursorY);
+        cursorY += 12;
+        cursorY = writeParagraph(log.result_summary || 'No summary recorded.', cursorY);
+        cursorY += 18;
       });
     } else {
       cursorY = ensurePage(60, cursorY, pageNum, appendixSubtitle);
       writeParagraph('No SQL queries logged for this case.', cursorY);
-    }
-
-    // ── AI Prompt Log ────────────────────────────────────────────────
-    cursorY = ensurePage(80, cursorY + 20, pageNum, appendixSubtitle);
-    cursorY = addSectionTitle('AI Prompt Log', cursorY);
-    if (promptLogs.data?.length) {
-      promptLogs.data.forEach((log) => {
-        cursorY = ensurePage(120, cursorY, pageNum, appendixSubtitle);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(8);
-        pdf.setTextColor(...DARK_GRAY);
-        pdf.text('Prompt', margin, cursorY);
-        cursorY += 12;
-        cursorY = writeParagraph(log.prompt_text, cursorY);
-        cursorY += 8;
-        pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(8);
-        pdf.setTextColor(...DARK_GRAY);
-        pdf.text('Response', margin, cursorY);
-        cursorY += 12;
-        cursorY = writeParagraph(log.response_text, cursorY);
-        cursorY += 16;
-      });
-    } else {
-      cursorY = writeParagraph('No AI prompts logged for this case.', cursorY);
-      cursorY += 12;
     }
 
     // ── Case Timeline ────────────────────────────────────────────────

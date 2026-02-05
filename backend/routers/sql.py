@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import time
+import json
 from difflib import get_close_matches
 from functools import lru_cache
 from datetime import datetime
@@ -225,8 +226,12 @@ async def execute_sql(
                 final_sql,
                 purpose,
                 result_summary,
+                result_columns,
+                result_rows,
+                row_count,
+                duration_ms,
                 created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 log_id,
@@ -237,6 +242,10 @@ async def execute_sql(
                 payload.sql_text,
                 payload.purpose,
                 result_summary,
+                json.dumps(columns),
+                json.dumps(rows[:10]),
+                row_count,
+                duration_ms,
                 created_at,
             ),
             db_path=db_path,

@@ -191,6 +191,10 @@ export interface QueryLogEntry {
   final_sql: string;
   purpose: string;
   result_summary: string;
+  result_columns?: string[] | null;
+  result_rows?: Array<Array<unknown>> | null;
+  row_count?: number | null;
+  duration_ms?: number | null;
   created_at: string;
 }
 
@@ -202,6 +206,10 @@ export interface QueryLogRequest {
   final_sql: string;
   purpose: string;
   result_summary: string;
+  result_columns?: string[] | null;
+  result_rows?: Array<Array<unknown>> | null;
+  row_count?: number | null;
+  duration_ms?: number | null;
 }
 
 export interface SqlExecuteRequest {

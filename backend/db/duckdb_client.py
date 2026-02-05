@@ -98,9 +98,25 @@ def ensure_tables(db_path: str | None = None) -> None:
                 final_sql VARCHAR,
                 purpose VARCHAR,
                 result_summary VARCHAR,
+                result_columns VARCHAR,
+                result_rows VARCHAR,
+                row_count INTEGER,
+                duration_ms INTEGER,
                 created_at TIMESTAMP
             )
             """
+        )
+        conn.execute(
+            "ALTER TABLE rg_query_log ADD COLUMN IF NOT EXISTS result_columns VARCHAR"
+        )
+        conn.execute(
+            "ALTER TABLE rg_query_log ADD COLUMN IF NOT EXISTS result_rows VARCHAR"
+        )
+        conn.execute(
+            "ALTER TABLE rg_query_log ADD COLUMN IF NOT EXISTS row_count INTEGER"
+        )
+        conn.execute(
+            "ALTER TABLE rg_query_log ADD COLUMN IF NOT EXISTS duration_ms INTEGER"
         )
         conn.execute(
             """
