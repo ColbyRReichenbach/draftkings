@@ -4,6 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
+
 :root {
   color-scheme: light;
 }
@@ -24,6 +25,7 @@ body {
   border: 1px solid rgba(38, 40, 48, 0.8);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(16px);
+  overflow: visible;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -60,23 +62,22 @@ body {
 
   .panel-sheen {
     position: relative;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .panel-sheen::after {
     content: '';
     position: absolute;
-    top: -40%;
-    right: -40%;
-    width: 140%;
-    height: 140%;
-    background: radial-gradient(circle, rgba(83, 184, 72, 0.12) 0%, rgba(83, 184, 72, 0) 60%);
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at 85% 15%, rgba(83, 184, 72, 0.12) 0%, rgba(83, 184, 72, 0) 55%);
     opacity: 0;
     transition: opacity 300ms ease;
     pointer-events: none;
+    clip-path: inset(0 round 24px);
   }
 
-  .panel-sheen:hover::after {
+  .glass-panel.panel-sheen:hover::after {
     opacity: 1;
   }
 }

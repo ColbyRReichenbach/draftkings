@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { riskClient } from '../api/riskClient';
-import { mockClient } from '../api/mockClient';
 
 export const useRiskCases = () =>
   useQuery({
@@ -26,5 +25,5 @@ export const useCaseDetailByPlayer = (playerId: string | null) =>
 export const useAnalyticsSummary = () =>
   useQuery({
     queryKey: ['analytics-summary'],
-    queryFn: () => mockClient.getAnalyticsSummary()
+    queryFn: () => riskClient.getAnalyticsSummary()
   });

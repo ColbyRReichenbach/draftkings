@@ -25,7 +25,7 @@ describe('AuditTrailPage', () => {
     fireEvent.click(row);
     expect(await screen.findByText('Case File')).toBeInTheDocument();
     expect(screen.getByText('Export Analyst Report (PDF)')).toBeInTheDocument();
-    expect(screen.getByText('Confirm & Log')).toBeDisabled();
+    expect(screen.getByText('Log Result')).toBeDisabled();
   });
 
   it('shows explicit view case button', async () => {

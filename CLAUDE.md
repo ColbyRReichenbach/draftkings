@@ -182,7 +182,7 @@ npm test
 
 ## Project Status
 
-**Current Phase**: Week 9 complete (Live integration + prompt routing + Snowflake-safe SQL)
+**Current Phase**: Week 9 extension complete (Ops-grade analytics + SQL execution + queue persistence)
 - [x] Week 1-2: Data foundation (synthetic generation + Snowflake setup) — Week 1 complete; Week 2 complete
 - [x] Week 3-4: dbt transformations (staging → intermediate → marts) — Week 3 complete; Week 4 complete
 - [x] Week 5: AI integration (semantic auditor + safety validator)
@@ -190,8 +190,10 @@ npm test
 - [x] Week 7: HITL-first UI + AI assist (analyst notes + LLM transparency)
 - [x] Week 8: Case File (HITL + AI + SQL + lifecycle flow)
 - [x] Week 9: Integration, testing & documentation
+- [x] Week 9 Extension: Persistent queue batching + SQL execution + trigger caching + manager analytics
 
 **Recent Lessons** (Most Recent First):
+- 2026-02-05: SQL drafts must reference live DuckDB schema snapshots and redact/avoid PII before execution.
 - 2026-02-03: Always record regulatory trigger checks alongside composite-score selections in HITL reviews.
 
 ---

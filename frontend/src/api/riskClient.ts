@@ -1,4 +1,4 @@
-import { AuditEntry, CaseDetail, RiskCase } from '../types/risk';
+import { AnalyticsSummary, AuditEntry, CaseDetail, RiskCase } from '../types/risk';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
 
@@ -27,6 +27,10 @@ export const riskClient = {
     }),
   getAuditTrail: () =>
     request<AuditEntry[]>('/api/audit-trail', {
+      method: 'GET'
+    }),
+  getAnalyticsSummary: () =>
+    request<AnalyticsSummary>('/api/analytics/summary', {
       method: 'GET'
     })
 };

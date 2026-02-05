@@ -77,6 +77,53 @@ vi.stubGlobal('fetch', (input: RequestInfo) => {
     return emptyJson([]);
   }
 
+  if (url.includes('/api/sql/execute')) {
+    return emptyJson({
+      columns: ['player_id', 'bet_amount'],
+      rows: [['PLR_1024_MA', 120]],
+      row_count: 1,
+      duration_ms: 12,
+      result_summary: 'Query returned 1 rows in 12ms. Columns: player_id, bet_amount. Notable patterns: ____.'
+    });
+  }
+
+  if (url.includes('/api/cases/trigger-check/')) {
+    return emptyJson([
+      {
+        state: 'MA',
+        triggered: false,
+        reason: 'Max bet $120.00 vs 90d avg $85.00.',
+        sql_text: 'SELECT 1',
+        row_count: 1,
+        created_at: '2026-02-04T00:00:00Z'
+      }
+    ]);
+  }
+
+  if (url.includes('/api/interventions/nudge/')) {
+    return emptyJson({
+      player_id: 'PLR_1024_MA',
+      analyst_id: 'Colby Reichenbach',
+      draft_nudge: 'Draft nudge',
+      final_nudge: 'Final nudge',
+      validation_status: 'VALID',
+      validation_violations: [],
+      created_at: '2026-02-04T00:00:00Z'
+    });
+  }
+
+  if (url.includes('/api/interventions/nudge')) {
+    return emptyJson({
+      player_id: 'PLR_1024_MA',
+      analyst_id: 'Colby Reichenbach',
+      draft_nudge: 'Draft nudge',
+      final_nudge: 'Final nudge',
+      validation_status: 'VALID',
+      validation_violations: [],
+      created_at: '2026-02-04T00:00:00Z'
+    });
+  }
+
   if (url.includes('/api/queue')) {
     return emptyJson([
       {

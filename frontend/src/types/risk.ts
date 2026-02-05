@@ -33,16 +33,28 @@ export interface CaseDetail {
 }
 
 export interface AnalyticsSummary {
-  total_cases: number;
-  avg_risk_score: number;
-  critical_share: number;
-  high_share: number;
-  medium_share: number;
-  low_share: number;
-  weekly_trend: {
-    week: string;
-    cases: number;
-  }[];
+  total_cases_started: number;
+  total_cases_submitted: number;
+  in_progress_count: number;
+  avg_time_to_submit_hours: number;
+  avg_time_in_progress_hours: number;
+  sql_queries_logged: number;
+  llm_prompts_logged: number;
+  cases_with_sql_pct: number;
+  cases_with_llm_pct: number;
+  risk_mix: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
+  trigger_checks_run: number;
+  nudges_validated: number;
+  funnel: {
+    queued: number;
+    started: number;
+    submitted: number;
+  };
 }
 
 export interface AuditEntry {
@@ -55,6 +67,8 @@ export interface AuditEntry {
   state_jurisdiction: 'MA' | 'NJ' | 'PA';
   timestamp: string;
   notes: string;
+  nudge_status?: string | null;
+  nudge_excerpt?: string | null;
 }
 
 export interface RiskExplanationRequest {
@@ -85,6 +99,25 @@ export interface NudgeValidationResult {
   violations: string[];
 }
 
+export interface NudgeLogRequest {
+  player_id: string;
+  analyst_id: string;
+  draft_nudge: string;
+  final_nudge: string;
+  validation_status: string;
+  validation_violations: string[];
+}
+
+export interface NudgeLogResponse {
+  player_id: string;
+  analyst_id: string;
+  draft_nudge: string;
+  final_nudge: string;
+  validation_status: string;
+  validation_violations: string[];
+  created_at: string;
+}
+
 export interface AnalystNoteRequest {
   player_id: string;
   analyst_id: string;
@@ -98,6 +131,21 @@ export interface AnalystNoteResponse {
   analyst_action: string;
   analyst_notes: string;
   created_at: string;
+}
+
+export interface AnalystNoteDraftRequest {
+  player_id: string;
+  analyst_id: string;
+  draft_action: string;
+  draft_notes: string;
+}
+
+export interface AnalystNoteDraftResponse {
+  player_id: string;
+  analyst_id: string;
+  draft_action: string;
+  draft_notes: string;
+  updated_at: string;
 }
 
 export interface PromptLogEntry {
@@ -154,6 +202,33 @@ export interface QueryLogRequest {
   final_sql: string;
   purpose: string;
   result_summary: string;
+}
+
+export interface SqlExecuteRequest {
+  player_id: string;
+  sql_text: string;
+  purpose: string;
+  analyst_id?: string;
+  prompt_text?: string;
+  result_summary?: string;
+  log?: boolean;
+}
+
+export interface SqlExecuteResponse {
+  columns: string[];
+  rows: Array<Array<unknown>>;
+  row_count: number;
+  duration_ms: number;
+  result_summary: string;
+}
+
+export interface TriggerCheckResult {
+  state: 'MA' | 'NJ' | 'PA';
+  triggered: boolean;
+  reason: string;
+  sql_text: string;
+  row_count: number;
+  created_at?: string | null;
 }
 
 export interface CaseTimelineEntry {

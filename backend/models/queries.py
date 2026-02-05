@@ -44,6 +44,39 @@ class QueryLogEntry(BaseModel):
     created_at: str
 
 
+class SqlExecuteRequest(BaseModel):
+    """Request body for executing read-only SQL."""
+
+    player_id: str = Field(..., pattern=r"^PLR_\d{4,6}_[A-Z]{2}$")
+    sql_text: str = Field(..., min_length=10, max_length=8000)
+    purpose: str = Field(..., min_length=5, max_length=500)
+    analyst_id: str | None = Field(default=None, max_length=100)
+    prompt_text: str | None = Field(default=None, max_length=2000)
+    result_summary: str | None = Field(default=None, max_length=1000)
+    log: bool = False
+
+
+class SqlExecuteResponse(BaseModel):
+    """Response payload for executed SQL."""
+
+    columns: list[str]
+    rows: list[list]
+    row_count: int
+    duration_ms: int
+    result_summary: str
+
+
+class TriggerCheckResult(BaseModel):
+    """State trigger check result payload."""
+
+    state: str
+    triggered: bool
+    reason: str
+    sql_text: str
+    row_count: int
+    created_at: str | None = None
+
+
 class CaseTimelineEntry(BaseModel):
     """Unified timeline entry for case activity."""
 

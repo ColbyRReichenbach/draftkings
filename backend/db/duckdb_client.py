@@ -115,6 +115,57 @@ def ensure_tables(db_path: str | None = None) -> None:
             )
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS rg_queue_cases (
+                case_id VARCHAR,
+                player_id VARCHAR,
+                risk_category VARCHAR,
+                composite_risk_score DOUBLE,
+                assigned_at TIMESTAMP,
+                batch_id VARCHAR,
+                status VARCHAR
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS rg_trigger_check_log (
+                player_id VARCHAR,
+                state VARCHAR,
+                triggered BOOLEAN,
+                reason VARCHAR,
+                sql_text VARCHAR,
+                row_count INTEGER,
+                created_at TIMESTAMP
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS rg_nudge_log (
+                log_id VARCHAR,
+                player_id VARCHAR,
+                analyst_id VARCHAR,
+                draft_nudge VARCHAR,
+                final_nudge VARCHAR,
+                validation_status VARCHAR,
+                validation_violations VARCHAR,
+                created_at TIMESTAMP
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS rg_analyst_notes_draft (
+                player_id VARCHAR,
+                analyst_id VARCHAR,
+                draft_notes VARCHAR,
+                draft_action VARCHAR,
+                updated_at TIMESTAMP
+            )
+            """
+        )
 
 
 def query_rows(

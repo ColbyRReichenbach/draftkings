@@ -22,6 +22,7 @@ from backend.db.duckdb_client import execute, get_db_path, query_rows
 from backend.models.hitl import PromptLogEntry
 from backend.models.prompt_router import PromptRouteRequest, PromptRouteResponse
 from backend.models.queries import QueryDraftRequest, QueryDraftResponse
+from backend.utils.pii import redact_text
 
 router = APIRouter()
 _PROHIBITED_SQL_PATTERN = re.compile(
@@ -58,7 +59,7 @@ async def semantic_audit(
     result = auditor.generate_risk_explanation(payload, reasoning=reasoning)
 
     try:
-        prompt_text = BehavioralSemanticAuditor._build_prompt(payload)
+        prompt_text = redact_text(BehavioralSemanticAuditor._build_prompt(payload))
         execute(
             """
             INSERT INTO rg_llm_prompt_log (
@@ -93,7 +94,9 @@ async def semantic_audit(
 
 @router.post("/query-draft", response_model=QueryDraftResponse)
 async def query_draft(
-    payload: QueryDraftRequest, request: Request
+    payload: QueryDraftRequest,
+    request: Request,
+    db_path: str = Depends(get_db_path),
 ) -> QueryDraftResponse:
     """
     Draft a SQL query for analyst review.
@@ -110,7 +113,8 @@ async def query_draft(
     if provider is None:
         raise HTTPException(status_code=503, detail="LLM provider not configured.")
 
-    prompt = build_query_draft_prompt(payload.player_id, payload.analyst_prompt)
+    safe_prompt = redact_text(payload.analyst_prompt)
+    prompt = build_query_draft_prompt(payload.player_id, safe_prompt, db_path=db_path)
     raw = provider.generate_json(
         prompt=prompt,
         model=config.fast_model,
@@ -169,18 +173,51 @@ async def route_prompt(
     if provider is None:
         raise HTTPException(status_code=503, detail="LLM provider not configured.")
 
-    prompt_text = payload.analyst_prompt.strip()
+    prompt_text = redact_text(payload.analyst_prompt.strip())
     lower_prompt = prompt_text.lower()
 
-    if any(keyword in lower_prompt for keyword in ["sql", "query", "select", "last", "bets"]):
-        route = "SQL_DRAFT"
-        tool = "query-draft"
-    elif any(keyword in lower_prompt for keyword in ["regulation", "regulatory", "trigger", "responsible gaming"]):
-        route = "REGULATORY_CONTEXT"
-        tool = "policy-context"
-    elif any(keyword in lower_prompt for keyword in ["news", "event", "game", "headline", "week of"]):
+    external_keywords = [
+        "news",
+        "headline",
+        "press",
+        "article",
+        "event",
+        "game",
+        "injury",
+        "weather",
+        "odds",
+        "line movement",
+        "week of",
+        "tournament",
+    ]
+    regulatory_keywords = [
+        "regulation",
+        "regulatory",
+        "trigger",
+        "responsible gaming",
+        "policy",
+        "compliance",
+    ]
+    sql_keywords = [
+        "sql",
+        "query",
+        "select",
+        "from",
+        "join",
+        "table",
+        "where",
+        "bets",
+    ]
+
+    if any(keyword in lower_prompt for keyword in external_keywords):
         route = "EXTERNAL_CONTEXT"
         tool = "external-context"
+    elif any(keyword in lower_prompt for keyword in regulatory_keywords):
+        route = "REGULATORY_CONTEXT"
+        tool = "policy-context"
+    elif any(keyword in lower_prompt for keyword in sql_keywords):
+        route = "SQL_DRAFT"
+        tool = "query-draft"
     else:
         route = "GENERAL_ANALYSIS"
         tool = "general-analysis"
@@ -191,7 +228,7 @@ async def route_prompt(
 
     if route == "SQL_DRAFT":
         raw = provider.generate_json(
-            prompt=build_query_draft_prompt(payload.player_id, prompt_text),
+            prompt=build_query_draft_prompt(payload.player_id, prompt_text, db_path=db_path),
             model=config.fast_model,
             temperature=config.temperature,
             max_tokens=config.max_tokens,

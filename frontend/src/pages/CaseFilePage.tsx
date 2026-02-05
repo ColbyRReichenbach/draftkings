@@ -1,15 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { AuditEntry, CaseStatus } from '../types/risk';
+import { AuditEntry, CaseStatus, SqlExecuteResponse, TriggerCheckResult } from '../types/risk';
 import { useCaseDetailByPlayer } from '../hooks/useRiskCases';
-import { useAnalystNotes, useSubmitAnalystNotes } from '../hooks/useAnalystNotes';
-import { usePromptLogs } from '../hooks/useAi';
+import {
+  useAnalystNotes,
+  useDraftAnalystNotes,
+  useSaveDraftAnalystNotes,
+  useSubmitAnalystNotes
+} from '../hooks/useAnalystNotes';
+import { useNudgeValidation, usePromptLogs, useSemanticAudit } from '../hooks/useAi';
+import { useNudgeLog, useSaveNudge } from '../hooks/useNudgeLog';
 import { useCaseTimeline, useSubmitCase } from '../hooks/useCaseTimeline';
 import { useCreateQueryLog, useQueryLog } from '../hooks/useQueryLog';
 import { useQueryDraft } from '../hooks/useQueryDraft';
 import { usePromptRouter } from '../hooks/usePromptRouter';
+import { useRunTriggerChecks, useSqlExecute, useTriggerChecks } from '../hooks/useSqlExecution';
 import { PromptLogPanel } from '../components/PromptLogPanel';
+import { NudgePreview } from '../components/NudgePreview';
+import { InfoBadge } from '../components/InfoBadge';
 import { RISK_STYLES } from '../styles/theme';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -19,13 +28,30 @@ interface CaseFilePageProps {
   onBack: () => void;
 }
 
-const ACTION_OPTIONS = [
+const BASE_ACTIONS = [
   'Provide Responsible Gaming Resources (RG Center)',
   'Offer Player Limits (Deposit/Wager/Time)',
-  'Offer Cool Off Period',
+  'Offer Cool-Off Period',
   'Offer Self-Exclusion',
   'Monitor & Document'
 ];
+
+const ACTION_BY_RISK: Record<string, string[]> = {
+  CRITICAL: [
+    'Immediate analyst review (within 2 hours)',
+    'Supportive nudge + timeout offer',
+    'Escalate for senior review (manual limits/exclusion)'
+  ],
+  HIGH: ['Supportive nudge (within 24 hours)', 'Enhanced monitoring (daily)'],
+  MEDIUM: ['Watchlist + weekly check-in', 'Optional check-in message'],
+  LOW: ['No action (monitor only)']
+};
+
+const TRIGGER_ACTIONS: Record<string, string> = {
+  NJ: 'Refer for mandatory 24-hour timeout + commission notification (NJ trigger)',
+  PA: 'Refer to PA Problem Gambling Council + 72-hour cooling period (PA trigger)',
+  MA: 'Internal documentation + analyst review (MA trigger)'
+};
 
 const STATUS_STYLES: Record<CaseStatus, { label: string; className: string }> = {
   NOT_STARTED: {
@@ -42,17 +68,41 @@ const STATUS_STYLES: Record<CaseStatus, { label: string; className: string }> = 
   }
 };
 
+const SCORE_TOOLTIP =
+  'Normalized 0–1 scale. 0.00–0.39 = Low, 0.40–0.59 = Medium, 0.60–0.79 = High, 0.80–1.00 = Critical.';
+
+const KPI_TOOLTIPS: Record<string, string> = {
+  'Total Bets (7d)':
+    'Total count of bets in the last 7 days. Minimum 2 bets required for ratios to be meaningful.',
+  'Total Wagered (7d)':
+    'Total wagered amount over the last 7 days. Use with bet count to normalize behavior.',
+  'Loss Chase Score': `${SCORE_TOOLTIP} Higher values indicate bets placed after losses.`,
+  'Bet Escalation': `${SCORE_TOOLTIP} Higher values indicate larger bets after losses vs wins.`,
+  'Market Drift': `${SCORE_TOOLTIP} Higher values indicate drift into atypical sports/market tiers.`,
+  'Temporal Risk': `${SCORE_TOOLTIP} Higher values indicate abnormal late-night activity vs baseline.`,
+  'Gamalyze': `${SCORE_TOOLTIP} External neuro-marker composite (Mindway AI).`
+};
+
 export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
   const { data: detail } = useCaseDetailByPlayer(entry.player_id);
   const notesQuery = useAnalystNotes(entry.player_id);
+  const draftNotesQuery = useDraftAnalystNotes(entry.player_id);
   const submitNotes = useSubmitAnalystNotes();
+  const saveDraftNotes = useSaveDraftAnalystNotes();
   const submitCase = useSubmitCase();
+  const semanticAudit = useSemanticAudit();
+  const nudgeValidation = useNudgeValidation();
+  const nudgeLog = useNudgeLog(entry.player_id);
+  const saveNudge = useSaveNudge();
   const promptLogs = usePromptLogs(entry.player_id);
   const queryLogs = useQueryLog(entry.player_id);
   const timeline = useCaseTimeline(entry.player_id);
   const queryDraft = useQueryDraft();
   const promptRouter = usePromptRouter();
+  const sqlExecute = useSqlExecute();
   const createQueryLog = useCreateQueryLog();
+  const triggerChecks = useTriggerChecks(entry.player_id);
+  const rerunTriggerChecks = useRunTriggerChecks();
   const reactQuery = useQueryClient();
 
   const [notes, setNotes] = useState('');
@@ -63,13 +113,22 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
   const [finalSql, setFinalSql] = useState('');
   const [purpose, setPurpose] = useState('');
   const [resultSummary, setResultSummary] = useState('');
+  const [sqlOutput, setSqlOutput] = useState<SqlExecuteResponse | null>(null);
+  const [openTriggerSql, setOpenTriggerSql] = useState<Record<string, boolean>>({});
+  const [nudgeDraft, setNudgeDraft] = useState('');
+  const [nudgeFinal, setNudgeFinal] = useState('');
 
   useEffect(() => {
     if (notesQuery.data) {
       setNotes(notesQuery.data.analyst_notes);
       setAction(notesQuery.data.analyst_action);
+      return;
     }
-  }, [notesQuery.data]);
+    if (draftNotesQuery.data) {
+      setNotes(draftNotesQuery.data.draft_notes);
+      setAction(draftNotesQuery.data.draft_action);
+    }
+  }, [notesQuery.data, draftNotesQuery.data]);
 
   useEffect(() => {
     if (queryDraft.data?.draft_sql) {
@@ -78,16 +137,33 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
     }
   }, [queryDraft.data]);
 
+  useEffect(() => {
+    if (semanticAudit.data?.draft_customer_nudge) {
+      setNudgeDraft(semanticAudit.data.draft_customer_nudge);
+      if (!nudgeFinal.trim()) {
+        setNudgeFinal(semanticAudit.data.draft_customer_nudge);
+      }
+    }
+  }, [semanticAudit.data, nudgeFinal]);
+
+  useEffect(() => {
+    if (nudgeLog.data) {
+      setNudgeDraft(nudgeLog.data.draft_nudge);
+      setNudgeFinal(nudgeLog.data.final_nudge);
+    }
+  }, [nudgeLog.data]);
+
   const isInProgress = status === 'IN_PROGRESS';
   const isSubmitted = status === 'SUBMITTED';
 
   const canSubmitNotes = notes.trim().length >= 10 && action.length > 0;
   const canSubmitDecision = isInProgress && canSubmitNotes;
   const canLogQuery =
+    Boolean(sqlOutput) &&
     prompt.trim().length >= 10 &&
     finalSql.trim().length >= 10 &&
     purpose.trim().length >= 5 &&
-    resultSummary.trim().length >= 5;
+    (resultSummary.trim().length >= 5 || Boolean(sqlOutput?.result_summary));
 
   const handleSubmitNotes = () => {
     if (!canSubmitDecision) {
@@ -119,11 +195,98 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
     );
   };
 
+  const handleSaveDraftNotes = () => {
+    if (!isInProgress) {
+      return;
+    }
+    saveDraftNotes.mutate({
+      player_id: entry.player_id,
+      analyst_id: entry.analyst_id,
+      draft_action: action,
+      draft_notes: notes
+    });
+  };
+
+  const handleGenerateExplanation = () => {
+    if (!detail) {
+      return;
+    }
+    semanticAudit.mutate({
+      player_id: detail.player_id,
+      composite_risk_score: detail.composite_risk_score,
+      risk_category: detail.risk_category,
+      total_bets_7d: detail.evidence_snapshot.total_bets_7d,
+      total_wagered_7d: detail.evidence_snapshot.total_wagered_7d,
+      loss_chase_score: detail.evidence_snapshot.loss_chase_score,
+      bet_escalation_score: detail.evidence_snapshot.bet_escalation_score,
+      market_drift_score: detail.evidence_snapshot.market_drift_score,
+      temporal_risk_score: detail.evidence_snapshot.temporal_risk_score,
+      gamalyze_risk_score: detail.evidence_snapshot.gamalyze_risk_score,
+      state_jurisdiction: detail.state_jurisdiction
+    });
+  };
+
+  const handleValidateNudge = () => {
+    const nudgeText = nudgeFinal.trim();
+    if (!nudgeText) {
+      return;
+    }
+    nudgeValidation.mutate(nudgeText);
+  };
+
+  const handleSaveNudge = () => {
+    if (!isInProgress || nudgeFinal.trim().length < 10) {
+      return;
+    }
+    const validationStatus = nudgeValidation.data?.is_valid
+      ? 'VALID'
+      : nudgeValidation.data
+      ? 'INVALID'
+      : 'UNVALIDATED';
+    saveNudge.mutate(
+      {
+        player_id: entry.player_id,
+        analyst_id: entry.analyst_id,
+        draft_nudge: nudgeDraft.trim() || nudgeFinal.trim(),
+        final_nudge: nudgeFinal.trim(),
+        validation_status: validationStatus,
+        validation_violations: nudgeValidation.data?.violations ?? []
+      },
+      {
+        onSuccess: () => {
+          reactQuery.invalidateQueries({ queryKey: ['nudge-log', entry.player_id] });
+        }
+      }
+    );
+  };
+
   const handleDraftSql = () => {
     if (!isInProgress) {
       return;
     }
     queryDraft.mutate({ player_id: entry.player_id, analyst_prompt: prompt.trim() });
+  };
+
+  const handleRunQuery = () => {
+    if (!isInProgress || prompt.trim().length < 10 || finalSql.trim().length < 10) {
+      return;
+    }
+    sqlExecute.mutate(
+      {
+        player_id: entry.player_id,
+        analyst_id: entry.analyst_id,
+        prompt_text: prompt.trim(),
+        sql_text: finalSql.trim(),
+        purpose: purpose.trim() || 'Ad hoc query',
+        log: false
+      },
+      {
+        onSuccess: (data) => {
+          setSqlOutput(data);
+          setResultSummary((prev) => (prev.trim().length > 0 ? prev : data.result_summary));
+        }
+      }
+    );
   };
 
   const handleRoutePrompt = () => {
@@ -158,7 +321,7 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
         draft_sql: draftSql.trim() || finalSql.trim(),
         final_sql: finalSql.trim(),
         purpose: purpose.trim(),
-        result_summary: resultSummary.trim()
+        result_summary: resultSummary.trim() || sqlOutput?.result_summary || 'Query executed.'
       },
       {
         onSuccess: () => {
@@ -176,6 +339,10 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
     const margin = 54;
     const contentWidth = pageWidth - margin * 2;
     const lineHeight = 14;
+    const HEADER_HEIGHT_FIRST = 82;
+    const HEADER_HEIGHT_OTHER = 62;
+    const CONTENT_PADDING = 18;
+    const FOOTER_RESERVE = 48;
 
     // Brand palette (typed as tuples for jsPDF compatibility)
     type RGB = [number, number, number];
@@ -363,14 +530,23 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
     };
 
     // ── Page-break helper with footer + new page + header ────────────────
-    const ensurePage = (neededHeight: number, curY: number, pageNum: { n: number }, subtitle?: string): number => {
-      if (curY + neededHeight > pageHeight - 50) {
+    const getContentTop = (isFirstPage: boolean) =>
+      (isFirstPage ? HEADER_HEIGHT_FIRST : HEADER_HEIGHT_OTHER) + CONTENT_PADDING;
+    const contentBottom = pageHeight - FOOTER_RESERVE;
+
+    const ensurePage = (
+      neededHeight: number,
+      curY: number,
+      pageNum: { n: number },
+      subtitle?: string
+    ): number => {
+      if (curY + neededHeight > contentBottom) {
         addFooter(pageNum.n);
         pdf.addPage();
         pageNum.n++;
         totalPages = pageNum.n;
         addPageHeader(false, subtitle);
-        return subtitle ? 72 : 72;
+        return getContentTop(false);
       }
       return curY;
     };
@@ -382,7 +558,7 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
     addPageHeader(true);
 
     // ── Case Identification Block ─────────────────────────────────────
-    let cursorY = 100;
+    let cursorY = getContentTop(true);
 
     // Light background box
     pdf.setFillColor(...OFF_WHITE);
@@ -488,114 +664,70 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
     cursorY = writeParagraph(notes.trim() || 'No analyst notes submitted yet.', cursorY);
     cursorY += 20;
 
-    // ── AI Transparency ───────────────────────────────────────────────
-    cursorY = ensurePage(100, cursorY, pageNum);
-    cursorY = addSectionTitle('AI Transparency', cursorY);
-    const aiLog = promptLogs.data?.[0];
-    if (aiLog) {
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(8);
-      pdf.setTextColor(...DARK_GRAY);
-      pdf.text('Prompt', margin, cursorY);
-      cursorY += 12;
-      cursorY = writeParagraph(aiLog.prompt_text, cursorY);
-      cursorY += 8;
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(8);
-      pdf.setTextColor(...DARK_GRAY);
-      pdf.text('AI Draft Response', margin, cursorY);
-      cursorY += 12;
-      cursorY = writeParagraph(aiLog.response_text, cursorY);
-    } else {
-      cursorY = writeParagraph('No AI drafts logged yet.', cursorY);
-    }
-    cursorY += 20;
+    // ── Customer Nudge ────────────────────────────────────────────────
+    cursorY = ensurePage(80, cursorY, pageNum);
+    cursorY = addSectionTitle('Customer Nudge', cursorY);
+    const nudgeText =
+      nudgeLog.data?.final_nudge ||
+      nudgeFinal.trim() ||
+      semanticAudit.data?.draft_customer_nudge ||
+      'No nudge drafted yet.';
+    cursorY = writeParagraph(nudgeText, cursorY);
+    const nudgeStatus = nudgeLog.data?.validation_status || 'UNVALIDATED';
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(8);
+    pdf.setTextColor(...DARK_GRAY);
+    pdf.text(`Validation: ${nudgeStatus}`, margin, cursorY + 10);
+    cursorY += 24;
 
-    // ── SQL Evidence Summary ──────────────────────────────────────────
-    cursorY = ensurePage(120, cursorY, pageNum);
-    cursorY = addSectionTitle('SQL Evidence Summary', cursorY);
-
-    if (!queryLogs.data?.length) {
-      cursorY = writeParagraph('No SQL evidence logged yet.', cursorY);
+    // ── Regulatory Trigger Summary ────────────────────────────────────
+    cursorY = ensurePage(90, cursorY, pageNum);
+    cursorY = addSectionTitle('Regulatory Trigger Summary', cursorY);
+    if (!triggerChecks.data?.length) {
+      cursorY = writeParagraph('No trigger checks recorded yet.', cursorY);
       cursorY += 12;
     } else {
-      autoTable(pdf, {
-        startY: cursorY,
-        head: [['Purpose', 'Summary', 'Timestamp']],
-        body: (queryLogs.data ?? []).map((log) => [
-          log.purpose,
-          log.result_summary,
-          formatTimestamp(log.created_at)
-        ]),
-        styles: {
-          fontSize: 8,
-          textColor: DARK_GRAY,
-          cellPadding: 5,
-          lineColor: LIGHT_GRAY,
-          lineWidth: 0.5
-        },
-        headStyles: {
-          fillColor: DARK_NAVY,
-          textColor: WHITE,
-          fontStyle: 'bold',
-          fontSize: 8
-        },
-        alternateRowStyles: { fillColor: OFF_WHITE },
-        margin: { left: margin, right: margin }
-      });
-
-      cursorY = (pdf as any).lastAutoTable.finalY + 24;
-    }
-
-    // ── Case Timeline ─────────────────────────────────────────────────
-    cursorY = ensurePage(120, cursorY, pageNum);
-    cursorY = addSectionTitle('Case Timeline', cursorY);
-
-    if (!timeline.data?.length) {
-      cursorY = writeParagraph('No timeline entries available yet.', cursorY);
-      cursorY += 12;
-    } else {
-      autoTable(pdf, {
-        startY: cursorY,
-        head: [['Event', 'Detail', 'Timestamp']],
-        body: (timeline.data ?? []).map((item) => [
-          item.event_type,
-          item.event_detail,
-          formatTimestamp(item.created_at)
-        ]),
-        styles: {
-          fontSize: 8,
-          textColor: DARK_GRAY,
-          cellPadding: 5,
-          lineColor: LIGHT_GRAY,
-          lineWidth: 0.5
-        },
-        headStyles: {
-          fillColor: DARK_NAVY,
-          textColor: WHITE,
-          fontStyle: 'bold',
-          fontSize: 8
-        },
-        alternateRowStyles: { fillColor: OFF_WHITE },
-        margin: { left: margin, right: margin }
+      triggerChecks.data.forEach((check) => {
+        cursorY = ensurePage(40, cursorY, pageNum);
+        cursorY = writeParagraph(
+          `${check.state}: ${check.triggered ? 'Triggered' : 'Not triggered'} — ${check.reason}`,
+          cursorY
+        );
+        cursorY += 6;
       });
     }
 
-    // Footer on last body page
-    addFooter(pageNum.n);
+    // ── Evidence & Log Summary ────────────────────────────────────────
+    cursorY = ensurePage(90, cursorY, pageNum);
+    cursorY = addSectionTitle('Evidence & Log Summary', cursorY);
+    const sqlCount = queryLogs.data?.length ?? 0;
+    const aiCount = promptLogs.data?.length ?? 0;
+    const timelineCount = timeline.data?.length ?? 0;
+    const summaryLines = [
+      `SQL evidence logged (${sqlCount} ${sqlCount === 1 ? 'query' : 'queries'}). See Appendix for details.`,
+      `AI prompt activity logged (${aiCount} ${aiCount === 1 ? 'prompt' : 'prompts'}). See Appendix for transcripts.`,
+      `Timeline entries logged (${timelineCount}). See Appendix for full timeline.`
+    ];
+    summaryLines.forEach((line) => {
+      cursorY = ensurePage(32, cursorY, pageNum);
+      cursorY = writeParagraph(line, cursorY);
+      cursorY += 4;
+    });
 
     // ────────────────────────────────────────────────────────────────────
     // APPENDIX PAGE(S)
     // ────────────────────────────────────────────────────────────────────
+    const appendixSubtitle = 'Appendix — Evidence & Logs';
+    addFooter(pageNum.n);
     pdf.addPage();
     pageNum.n++;
     totalPages = pageNum.n;
-    addPageHeader(false, 'Appendix — SQL Drafts & Prompts');
-    cursorY = 78;
+    addPageHeader(false, appendixSubtitle);
+    cursorY = getContentTop(false);
 
     if (queryLogs.data?.length) {
       queryLogs.data.forEach((log, index) => {
-        cursorY = ensurePage(160, cursorY, pageNum, 'Appendix — SQL Drafts & Prompts');
+        cursorY = ensurePage(160, cursorY, pageNum, appendixSubtitle);
 
         // Section title for each query
         cursorY = addSectionTitle(`Query ${index + 1}: ${log.purpose}`, cursorY);
@@ -644,8 +776,71 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
         cursorY += finalBlockH + 20;
       });
     } else {
-      cursorY = ensurePage(60, cursorY, pageNum, 'Appendix — SQL Drafts & Prompts');
+      cursorY = ensurePage(60, cursorY, pageNum, appendixSubtitle);
       writeParagraph('No SQL queries logged for this case.', cursorY);
+    }
+
+    // ── AI Prompt Log ────────────────────────────────────────────────
+    cursorY = ensurePage(80, cursorY + 20, pageNum, appendixSubtitle);
+    cursorY = addSectionTitle('AI Prompt Log', cursorY);
+    if (promptLogs.data?.length) {
+      promptLogs.data.forEach((log) => {
+        cursorY = ensurePage(120, cursorY, pageNum, appendixSubtitle);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(8);
+        pdf.setTextColor(...DARK_GRAY);
+        pdf.text('Prompt', margin, cursorY);
+        cursorY += 12;
+        cursorY = writeParagraph(log.prompt_text, cursorY);
+        cursorY += 8;
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(8);
+        pdf.setTextColor(...DARK_GRAY);
+        pdf.text('Response', margin, cursorY);
+        cursorY += 12;
+        cursorY = writeParagraph(log.response_text, cursorY);
+        cursorY += 16;
+      });
+    } else {
+      cursorY = writeParagraph('No AI prompts logged for this case.', cursorY);
+      cursorY += 12;
+    }
+
+    // ── Case Timeline ────────────────────────────────────────────────
+    cursorY = ensurePage(80, cursorY + 10, pageNum, appendixSubtitle);
+    cursorY = addSectionTitle('Case Timeline', cursorY);
+    if (timeline.data?.length) {
+      autoTable(pdf, {
+        startY: cursorY,
+        head: [['Event', 'Detail', 'Timestamp']],
+        body: (timeline.data ?? []).map((item) => [
+          item.event_type,
+          item.event_detail,
+          formatTimestamp(item.created_at)
+        ]),
+        styles: {
+          fontSize: 8,
+          textColor: DARK_GRAY,
+          cellPadding: 5,
+          lineColor: LIGHT_GRAY,
+          lineWidth: 0.5
+        },
+        headStyles: {
+          fillColor: DARK_NAVY,
+          textColor: WHITE,
+          fontStyle: 'bold',
+          fontSize: 8
+        },
+        alternateRowStyles: { fillColor: OFF_WHITE },
+        margin: { left: margin, right: margin, top: getContentTop(false), bottom: FOOTER_RESERVE },
+        didDrawPage: () => {
+          addPageHeader(false, appendixSubtitle);
+        }
+      });
+      cursorY = (pdf as any).lastAutoTable?.finalY ? (pdf as any).lastAutoTable.finalY + 24 : cursorY + 24;
+    } else {
+      cursorY = writeParagraph('No timeline entries available yet.', cursorY);
+      cursorY += 12;
     }
 
     // Footer on appendix page(s)
@@ -676,6 +871,39 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
     }
     return `${notesQuery.data.analyst_action} — ${notesQuery.data.analyst_notes}`;
   }, [notesQuery.data]);
+
+  const actionOptions = useMemo(() => {
+    const riskCategory = entry.risk_category ?? 'HIGH';
+    const options = new Set<string>([...BASE_ACTIONS, ...(ACTION_BY_RISK[riskCategory] ?? [])]);
+    (triggerChecks.data ?? []).forEach((check) => {
+      if (check.triggered && TRIGGER_ACTIONS[check.state]) {
+        options.add(TRIGGER_ACTIONS[check.state]);
+      }
+    });
+    return Array.from(options);
+  }, [entry.risk_category, triggerChecks.data]);
+
+  const sqlErrorMessage = useMemo(() => {
+    if (!sqlExecute.error) {
+      return null;
+    }
+    const raw =
+      sqlExecute.error instanceof Error
+        ? sqlExecute.error.message
+        : String(sqlExecute.error);
+    const trimmed = raw.trim();
+    if (trimmed.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (parsed?.detail) {
+          return parsed.detail;
+        }
+      } catch {
+        return raw;
+      }
+    }
+    return raw;
+  }, [sqlExecute.error]);
 
   return (
     <div className="grid gap-4">
@@ -745,48 +973,69 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
           </p>
         </div>
 
-        <div className="glass-panel panel-sheen rounded-2xl p-5">
+        <div className="glass-panel panel-sheen rounded-2xl p-5 overflow-visible">
           <p className="border-l-[3px] border-[#F3701B] pl-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
             Evidence Snapshot
           </p>
           {detail ? (
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="rounded-xl bg-slate-950/60 p-3">
-                <p className="text-xs text-slate-400">Total Bets (7d)</p>
-                <p className="text-lg font-semibold text-slate-100">
-                  {detail.evidence_snapshot.total_bets_7d}
-                </p>
-              </div>
-              <div className="rounded-xl bg-slate-950/60 p-3">
-                <p className="text-xs text-slate-400">Total Wagered (7d)</p>
-                <p className="text-lg font-semibold text-slate-100">
-                  ${detail.evidence_snapshot.total_wagered_7d.toLocaleString()}
-                </p>
-              </div>
-              <div className="rounded-xl bg-slate-950/60 p-3">
-                <p className="text-xs text-slate-400">Loss Chase Score</p>
-                <p className={`text-lg font-semibold ${detail.evidence_snapshot.loss_chase_score >= 0.8 ? 'text-red-400' : detail.evidence_snapshot.loss_chase_score >= 0.6 ? 'text-[#F3701B]' : 'text-slate-100'}`}>
-                  {(detail.evidence_snapshot.loss_chase_score * 100).toFixed(0)}%
-                </p>
-              </div>
-              <div className="rounded-xl bg-slate-950/60 p-3">
-                <p className="text-xs text-slate-400">Bet Escalation</p>
-                <p className={`text-lg font-semibold ${detail.evidence_snapshot.bet_escalation_score >= 0.8 ? 'text-red-400' : detail.evidence_snapshot.bet_escalation_score >= 0.6 ? 'text-[#F3701B]' : 'text-slate-100'}`}>
-                  {(detail.evidence_snapshot.bet_escalation_score * 100).toFixed(0)}%
-                </p>
-              </div>
-              <div className="rounded-xl bg-slate-950/60 p-3">
-                <p className="text-xs text-slate-400">Market Drift</p>
-                <p className={`text-lg font-semibold ${detail.evidence_snapshot.market_drift_score >= 0.8 ? 'text-red-400' : detail.evidence_snapshot.market_drift_score >= 0.6 ? 'text-[#F3701B]' : 'text-slate-100'}`}>
-                  {(detail.evidence_snapshot.market_drift_score * 100).toFixed(0)}%
-                </p>
-              </div>
-              <div className="rounded-xl bg-slate-950/60 p-3">
-                <p className="text-xs text-slate-400">Temporal Risk</p>
-                <p className={`text-lg font-semibold ${detail.evidence_snapshot.temporal_risk_score >= 0.8 ? 'text-red-400' : detail.evidence_snapshot.temporal_risk_score >= 0.6 ? 'text-[#F3701B]' : 'text-slate-100'}`}>
-                  {(detail.evidence_snapshot.temporal_risk_score * 100).toFixed(0)}%
-                </p>
-              </div>
+              <InfoBadge label={KPI_TOOLTIPS['Total Bets (7d)']} className="rounded-xl bg-slate-950/60 p-3">
+                  <p className="text-xs text-slate-400">Total Bets (7d)</p>
+                  <p className="text-lg font-semibold text-slate-100">
+                    {detail.evidence_snapshot.total_bets_7d}
+                  </p>
+              </InfoBadge>
+              <InfoBadge label={KPI_TOOLTIPS['Total Wagered (7d)']} className="rounded-xl bg-slate-950/60 p-3">
+                  <p className="text-xs text-slate-400">Total Wagered (7d)</p>
+                  <p className="text-lg font-semibold text-slate-100">
+                    ${detail.evidence_snapshot.total_wagered_7d.toLocaleString()}
+                  </p>
+              </InfoBadge>
+              <InfoBadge label={KPI_TOOLTIPS['Loss Chase Score']} className="rounded-xl bg-slate-950/60 p-3">
+                  <p className="text-xs text-slate-400">Loss Chase Score</p>
+                  <p className={`text-lg font-semibold ${detail.evidence_snapshot.loss_chase_score >= 0.8 ? 'text-red-400' : detail.evidence_snapshot.loss_chase_score >= 0.6 ? 'text-[#F3701B]' : 'text-slate-100'}`}>
+                    {detail.evidence_snapshot.loss_chase_score.toFixed(2)}
+                    <span className="ml-2 text-xs text-slate-500">
+                      ({(detail.evidence_snapshot.loss_chase_score * 100).toFixed(0)}%)
+                    </span>
+                  </p>
+              </InfoBadge>
+              <InfoBadge label={KPI_TOOLTIPS['Bet Escalation']} className="rounded-xl bg-slate-950/60 p-3">
+                  <p className="text-xs text-slate-400">Bet Escalation</p>
+                  <p className={`text-lg font-semibold ${detail.evidence_snapshot.bet_escalation_score >= 0.8 ? 'text-red-400' : detail.evidence_snapshot.bet_escalation_score >= 0.6 ? 'text-[#F3701B]' : 'text-slate-100'}`}>
+                    {detail.evidence_snapshot.bet_escalation_score.toFixed(2)}
+                    <span className="ml-2 text-xs text-slate-500">
+                      ({(detail.evidence_snapshot.bet_escalation_score * 100).toFixed(0)}%)
+                    </span>
+                  </p>
+              </InfoBadge>
+              <InfoBadge label={KPI_TOOLTIPS['Market Drift']} className="rounded-xl bg-slate-950/60 p-3">
+                  <p className="text-xs text-slate-400">Market Drift</p>
+                  <p className={`text-lg font-semibold ${detail.evidence_snapshot.market_drift_score >= 0.8 ? 'text-red-400' : detail.evidence_snapshot.market_drift_score >= 0.6 ? 'text-[#F3701B]' : 'text-slate-100'}`}>
+                    {detail.evidence_snapshot.market_drift_score.toFixed(2)}
+                    <span className="ml-2 text-xs text-slate-500">
+                      ({(detail.evidence_snapshot.market_drift_score * 100).toFixed(0)}%)
+                    </span>
+                  </p>
+              </InfoBadge>
+              <InfoBadge label={KPI_TOOLTIPS['Temporal Risk']} className="rounded-xl bg-slate-950/60 p-3">
+                  <p className="text-xs text-slate-400">Temporal Risk</p>
+                  <p className={`text-lg font-semibold ${detail.evidence_snapshot.temporal_risk_score >= 0.8 ? 'text-red-400' : detail.evidence_snapshot.temporal_risk_score >= 0.6 ? 'text-[#F3701B]' : 'text-slate-100'}`}>
+                    {detail.evidence_snapshot.temporal_risk_score.toFixed(2)}
+                    <span className="ml-2 text-xs text-slate-500">
+                      ({(detail.evidence_snapshot.temporal_risk_score * 100).toFixed(0)}%)
+                    </span>
+                  </p>
+              </InfoBadge>
+              <InfoBadge label={KPI_TOOLTIPS['Gamalyze']} className="rounded-xl bg-slate-950/60 p-3">
+                  <p className="text-xs text-slate-400">Gamalyze</p>
+                  <p className={`text-lg font-semibold ${detail.evidence_snapshot.gamalyze_risk_score >= 0.8 ? 'text-red-400' : detail.evidence_snapshot.gamalyze_risk_score >= 0.6 ? 'text-[#F3701B]' : 'text-slate-100'}`}>
+                    {detail.evidence_snapshot.gamalyze_risk_score.toFixed(2)}
+                    <span className="ml-2 text-xs text-slate-500">
+                      ({(detail.evidence_snapshot.gamalyze_risk_score * 100).toFixed(0)}%)
+                    </span>
+                  </p>
+              </InfoBadge>
             </div>
           ) : (
             <p className="mt-2 text-sm text-slate-400">Loading evidence snapshot...</p>
@@ -814,12 +1063,20 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
               <option value="" disabled>
                 Select action
               </option>
-              {ACTION_OPTIONS.map((option) => (
+              {actionOptions.map((option) => (
                 <option key={option} value={option}>
                   {option}
                 </option>
               ))}
             </select>
+            <button
+              type="button"
+              onClick={handleSaveDraftNotes}
+              disabled={!isInProgress || saveDraftNotes.isPending}
+              className="hover-lift rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+            >
+              {saveDraftNotes.isPending ? 'Saving...' : 'Save Draft'}
+            </button>
             <button
               type="button"
               onClick={handleSubmitNotes}
@@ -831,10 +1088,176 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
             {submitNotes.isSuccess ? (
               <span className="text-xs text-emerald-300">Saved.</span>
             ) : null}
+            {saveDraftNotes.isSuccess ? (
+              <span className="text-xs text-slate-400">Draft saved.</span>
+            ) : null}
           </div>
         </div>
 
         <PromptLogPanel logs={promptLogs.data ?? []} />
+
+        <div className="glass-panel panel-sheen rounded-2xl p-5">
+          <p className="border-l-[3px] border-[#53B848] pl-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            AI Actions (Drafts Only)
+          </p>
+          <p className="mt-2 text-xs text-slate-400">
+            AI drafts are assistive only. Analyst approval required before any action.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleGenerateExplanation}
+              disabled={!isInProgress || semanticAudit.isPending}
+              className="hover-lift rounded-xl bg-[#53B848] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-black disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+            >
+              {semanticAudit.isPending ? 'Drafting...' : 'Draft AI Summary'}
+            </button>
+            <button
+              type="button"
+              onClick={handleValidateNudge}
+              disabled={
+                !isInProgress ||
+                nudgeValidation.isPending ||
+                !(semanticAudit.data?.draft_customer_nudge ?? detail?.draft_nudge)
+              }
+              className="hover-lift rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+            >
+              {nudgeValidation.isPending ? 'Validating...' : 'Validate Nudge'}
+            </button>
+          </div>
+          {semanticAudit.isError ? (
+            <p className="mt-2 text-xs text-red-300">AI draft failed. Check API.</p>
+          ) : null}
+          {semanticAudit.data?.explanation ? (
+            <div className="mt-3 rounded-xl bg-slate-950/60 p-3 text-xs text-slate-300">
+              <p className="font-semibold text-slate-200">Draft AI Summary</p>
+              <p className="mt-2">{semanticAudit.data.explanation}</p>
+            </div>
+          ) : null}
+          <div className="mt-3 grid gap-3 lg:grid-cols-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Draft Nudge</p>
+              <textarea
+                value={nudgeDraft}
+                onChange={(event) => setNudgeDraft(event.target.value)}
+                disabled={!isInProgress}
+                className="mt-2 h-24 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100"
+                placeholder="Draft nudge from AI will appear here."
+              />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Analyst Final Nudge
+              </p>
+              <textarea
+                value={nudgeFinal}
+                onChange={(event) => setNudgeFinal(event.target.value)}
+                disabled={!isInProgress}
+                className="mt-2 h-24 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100"
+                placeholder="Edit the nudge to reflect analyst tone and compliance."
+              />
+            </div>
+          </div>
+          <NudgePreview
+            nudgeText={nudgeFinal.trim() || nudgeDraft.trim()}
+            validationResult={nudgeValidation.data ?? null}
+            isValidating={nudgeValidation.isPending}
+          />
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+            <button
+              type="button"
+              onClick={handleSaveNudge}
+              disabled={!isInProgress || saveNudge.isPending || nudgeFinal.trim().length < 10}
+              className="rounded-xl border border-slate-700 bg-[#53B848] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-black disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+            >
+              {saveNudge.isPending ? 'Saving...' : 'Save Nudge'}
+            </button>
+            {saveNudge.isSuccess ? <span className="text-emerald-300">Saved.</span> : null}
+            {nudgeLog.data?.created_at ? (
+              <span>Last saved: {new Date(nudgeLog.data.created_at).toLocaleString()}</span>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="glass-panel panel-sheen rounded-2xl p-5">
+          <p className="border-l-[3px] border-[#53B848] pl-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Regulatory Trigger Checks
+          </p>
+          <p className="mt-2 text-xs text-slate-400">
+            Deterministic checks for state-mandated triggers. Logged as SQL evidence.
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                rerunTriggerChecks.mutate(entry.player_id, {
+                  onSuccess: () =>
+                    reactQuery.invalidateQueries({
+                      queryKey: ['trigger-checks', entry.player_id]
+                    })
+                })
+              }
+              disabled={rerunTriggerChecks.isPending}
+              className="rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-200 hover:border-slate-500 disabled:cursor-not-allowed disabled:text-slate-500"
+            >
+              {rerunTriggerChecks.isPending ? 'Rechecking...' : 'Re-run Trigger Check'}
+            </button>
+          </div>
+          {triggerChecks.isLoading ? (
+            <p className="mt-3 text-sm text-slate-400">Running trigger checks...</p>
+          ) : triggerChecks.data?.length ? (
+            <div className="mt-3 space-y-3">
+              {triggerChecks.data.map((check: TriggerCheckResult) => {
+                const isOpen = openTriggerSql[check.state];
+                return (
+                  <div key={check.state} className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full border border-slate-700 px-2 py-0.5">
+                          {check.state}
+                        </span>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[11px] ${
+                            check.triggered
+                              ? 'bg-[#F3701B] text-black'
+                              : 'bg-slate-800 text-slate-300'
+                          }`}
+                        >
+                          {check.triggered ? 'Triggered' : 'Not Triggered'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenTriggerSql((prev) => ({
+                            ...prev,
+                            [check.state]: !prev[check.state]
+                          }))
+                        }
+                        className="text-[11px] text-slate-400 hover:text-slate-200"
+                      >
+                        {isOpen ? 'Hide SQL' : 'View SQL'}
+                      </button>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-400">{check.reason}</p>
+                    {check.created_at ? (
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        Last checked: {new Date(check.created_at).toLocaleString()}
+                      </p>
+                    ) : null}
+                    {isOpen ? (
+                      <pre className="mt-3 whitespace-pre-wrap rounded-xl bg-slate-950/80 p-3 text-xs text-slate-200">
+                        {check.sql_text}
+                      </pre>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-slate-400">No trigger checks available.</p>
+          )}
+        </div>
 
         <div className="glass-panel panel-sheen rounded-2xl p-5">
           <p className="border-l-[3px] border-[#53B848] pl-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -889,6 +1312,9 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
         <div className="glass-panel panel-sheen rounded-2xl p-5">
           <p className="border-l-[3px] border-[#F3701B] pl-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
             SQL Assistant
+          </p>
+          <p className="mt-2 text-xs text-slate-400">
+            PII is restricted. Do not include names or emails in queries.
           </p>
           <textarea
             value={prompt}
@@ -949,23 +1375,86 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
                   onChange={(event) => setResultSummary(event.target.value)}
                   disabled={!isInProgress}
                   className="mt-2 h-24 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100"
-                  placeholder="Summarize findings from running the query"
+                  placeholder="Summarize findings from the query output (auto-filled after execution)."
                 />
+                {!sqlOutput ? (
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Run & log the query to capture sample output and prefill this summary.
+                  </p>
+                ) : null}
               </div>
-              <button
-                type="button"
-                onClick={handleLogQuery}
-                disabled={!isInProgress || !canLogQuery || createQueryLog.isPending}
-                className="hover-lift rounded-xl border border-slate-700 bg-[#53B848] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-black disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
-              >
-                {createQueryLog.isPending ? 'Logging...' : 'Confirm & Log'}
-              </button>
-            </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={handleRunQuery}
+                  disabled={!isInProgress || sqlExecute.isPending || finalSql.trim().length < 10}
+                  className="hover-lift rounded-xl border border-slate-700 bg-[#53B848] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-black disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                >
+              {sqlExecute.isPending ? 'Running...' : 'Run Query'}
+            </button>
+            <button
+              type="button"
+              onClick={handleLogQuery}
+                  disabled={!isInProgress || !canLogQuery || createQueryLog.isPending}
+                  className="hover-lift rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                >
+              {createQueryLog.isPending ? 'Logging...' : 'Log Result'}
+            </button>
           </div>
+          {sqlExecute.isError ? (
+            <p className="text-xs text-red-300">
+              SQL execution failed. {sqlErrorMessage ?? 'Check syntax and table names.'}
+            </p>
+          ) : null}
+        </div>
+      </div>
           <p className="mt-2 text-xs text-slate-400">
             SQL drafts are assistive only. Analyst review is required before logging.
             Snowflake SQL only (DATEADD, DATEDIFF, DATE_TRUNC, ILIKE, QUALIFY).
           </p>
+        </div>
+
+        <div className="glass-panel panel-sheen rounded-2xl p-5">
+          <p className="border-l-[3px] border-[#F3701B] pl-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            SQL Output (Read-only)
+          </p>
+          {sqlOutput ? (
+            <div className="mt-3 space-y-3">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                <span>{sqlOutput.row_count} rows returned</span>
+                <span>•</span>
+                <span>{sqlOutput.duration_ms} ms</span>
+              </div>
+              <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/60">
+                <table className="min-w-full text-xs text-slate-300">
+                  <thead className="bg-slate-900/80 text-slate-400">
+                    <tr>
+                      {sqlOutput.columns.map((col) => (
+                        <th key={col} className="px-3 py-2 text-left font-semibold">
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sqlOutput.rows.map((row, rowIndex) => (
+                      <tr key={`row-${rowIndex}`} className="border-t border-slate-800">
+                        {row.map((cell, cellIndex) => (
+                          <td key={`cell-${rowIndex}-${cellIndex}`} className="px-3 py-2">
+                            {cell === null || cell === undefined ? '—' : String(cell)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-slate-400">
+              No output yet. Run and log a query to capture sample results.
+            </p>
+          )}
         </div>
 
         <div className="glass-panel panel-sheen rounded-2xl p-5">

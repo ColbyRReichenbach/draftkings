@@ -5,11 +5,16 @@ interface RiskDistributionChartProps {
 }
 
 export const RiskDistributionChart = ({ summary }: RiskDistributionChartProps) => {
+  const total =
+    summary.risk_mix.critical +
+    summary.risk_mix.high +
+    summary.risk_mix.medium +
+    summary.risk_mix.low;
   const rows = [
-    { label: 'Critical', value: summary.critical_share, color: 'bg-red-500' },
-    { label: 'High', value: summary.high_share, color: 'bg-[#F3701B]' },
-    { label: 'Medium', value: summary.medium_share, color: 'bg-yellow-400' },
-    { label: 'Low', value: summary.low_share, color: 'bg-[#53B848]' }
+    { label: 'Critical', value: summary.risk_mix.critical, color: 'bg-red-500' },
+    { label: 'High', value: summary.risk_mix.high, color: 'bg-[#F3701B]' },
+    { label: 'Medium', value: summary.risk_mix.medium, color: 'bg-yellow-400' },
+    { label: 'Low', value: summary.risk_mix.low, color: 'bg-[#53B848]' }
   ];
 
   return (
@@ -20,11 +25,15 @@ export const RiskDistributionChart = ({ summary }: RiskDistributionChartProps) =
           <div key={row.label}>
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span>{row.label}</span>
-              <span>{Math.round(row.value * 100)}%</span>
+              <span>{total > 0 ? Math.round((row.value / total) * 100) : 0}%</span>
             </div>
             <div className="mt-1 h-2 w-full rounded-full bg-slate-800">
-              <div className={`h-2 rounded-full ${row.color}`} style={{ width: `${row.value * 100}%` }} />
+              <div
+                className={`h-2 rounded-full ${row.color}`}
+                style={{ width: `${total > 0 ? (row.value / total) * 100 : 0}%` }}
+              />
             </div>
+            <div className="mt-1 text-[11px] text-slate-500">{row.value} cases</div>
           </div>
         ))}
       </div>

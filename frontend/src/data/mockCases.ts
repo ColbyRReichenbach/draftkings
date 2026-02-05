@@ -217,19 +217,28 @@ export const mockCaseDetails: CaseDetail[] = [
 ];
 
 export const mockAnalyticsSummary: AnalyticsSummary = {
-  total_cases: 614,
-  avg_risk_score: 0.46,
-  critical_share: 0.04,
-  high_share: 0.12,
-  medium_share: 0.22,
-  low_share: 0.62,
-  weekly_trend: [
-    { week: 'Wk 1', cases: 480 },
-    { week: 'Wk 2', cases: 512 },
-    { week: 'Wk 3', cases: 569 },
-    { week: 'Wk 4', cases: 603 },
-    { week: 'Wk 5', cases: 614 }
-  ]
+  total_cases_started: 72,
+  total_cases_submitted: 38,
+  in_progress_count: 12,
+  avg_time_to_submit_hours: 6.4,
+  avg_time_in_progress_hours: 2.1,
+  sql_queries_logged: 94,
+  llm_prompts_logged: 58,
+  cases_with_sql_pct: 0.72,
+  cases_with_llm_pct: 0.61,
+  risk_mix: {
+    critical: 6,
+    high: 18,
+    medium: 30,
+    low: 18
+  },
+  trigger_checks_run: 26,
+  nudges_validated: 14,
+  funnel: {
+    queued: 50,
+    started: 72,
+    submitted: 38
+  }
 };
 
 export const mockAuditTrail: AuditEntry[] = [

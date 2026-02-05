@@ -31,13 +31,15 @@ docs/             # Documentation
 ```
 
 ## Tech Stack
-- Snowflake + dbt + Python + FastAPI + React + OpenAI API
+- Snowflake (target) + DuckDB (dev) + dbt + Python + FastAPI + React + OpenAI API
 
 ## Key Features
-- 80% reduction in analyst review queue
-- AI-powered behavioral explanations
-- 100% audit trail compliance
-- DraftKings-authentic tech stack
+- Persisted analyst queue with lifecycle tracking (Not Started → In Progress → Submitted)
+- Full Case File workbench with HITL notes, SQL evidence, and AI assist transparency
+- Read-only SQL execution with logging + Snowflake-safe guardrails
+- Regulatory trigger checks (MA/NJ/PA) logged as deterministic SQL evidence
+- Manager-grade Analytics dashboard (throughput, rigor, compliance signals)
+- DraftKings-authentic tech stack + responsible AI framing
 
 ## Documentation
 - CLAUDE.md - Project overview
@@ -45,3 +47,4 @@ docs/             # Documentation
 - claude/agents/ - Specialized tasks
 - claude/workflows/ - Step-by-step procedures
 - docs/HITL_REVIEW.md - Completed analyst review with SQL queries
+- docs/WEEK9_REPORT.md - Live integration + analytics + SQL workflow updates

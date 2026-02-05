@@ -16,6 +16,27 @@ RG_ANALYTICS (Database)
 
 ---
 
+## DuckDB Dev Snapshot (Authoritative for This Repo)
+**Generated**: 2026-02-04  
+**Note**: The live DuckDB schema is the source of truth for app/LLM queries.  
+If a column is not listed here, it is **not available** in the dev environment.
+
+### STAGING.STG_BET_LOGS (physical: `staging_staging.stg_bet_logs`)
+`bet_id`, `player_id`, `bet_timestamp`, `sport_category`, `market_type`, `bet_amount`, `odds_american`, `outcome`
+
+### STAGING.STG_PLAYER_PROFILES (physical: `staging_staging.stg_player_profiles`)
+`player_id`, `first_name`, `last_name`, `email`, `age`, `state_jurisdiction`, `risk_cohort`
+
+### PROD.RG_RISK_SCORES (physical: `staging_prod.rg_risk_scores`)
+`player_id`, `loss_chase_score`, `bet_escalation_score`, `market_drift_score`, `temporal_risk_score`,
+`gamalyze_risk_score`, `composite_risk_score`, `risk_category`, `calculated_at`
+
+### PROD.RG_INTERVENTION_QUEUE (physical: `staging_prod.rg_intervention_queue`)
+`player_id`, `composite_risk_score`, `risk_category`, `primary_driver`, `loss_chase_score`, `bet_escalation_score`,
+`market_drift_score`, `temporal_risk_score`, `gamalyze_risk_score`, `calculated_at`
+
+---
+
 ## STAGING Layer
 
 ### STG_BET_LOGS

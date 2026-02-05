@@ -62,6 +62,12 @@ export const AuditTrailTable = ({ entries, activePlayerId, onSelect }: AuditTrai
                 <td className="py-3">
                   <p className="text-slate-100">{entry.action}</p>
                   <p className="text-xs text-slate-400">{entry.notes}</p>
+                  {entry.nudge_status ? (
+                    <p className="text-xs text-slate-400">
+                      Nudge: {entry.nudge_status}
+                      {entry.nudge_excerpt ? ` — ${entry.nudge_excerpt}` : ''}
+                    </p>
+                  ) : null}
                   <p className="text-xs text-slate-400">Signed by {entry.analyst_id}</p>
                 </td>
                 <td className="py-3">{entry.analyst_id}</td>

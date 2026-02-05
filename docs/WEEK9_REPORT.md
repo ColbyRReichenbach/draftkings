@@ -25,3 +25,25 @@ This release reinforces analyst ownership:
 - Portfolio polish (screenshots, README final pass).
 - Optional API auth and role-based access controls.
 - Replace external-context routing with internal policy knowledge base.
+
+---
+
+# Week 9 Extension — Analyst Ops + SQL Execution
+
+## Summary
+Week 9 extended into ops-grade analyst tooling: a persisted queue with refill logic, read-only SQL execution with guardrails, cached regulatory trigger checks, and a manager-ready analytics dashboard. These changes make the workflow feel production-real for a solo analyst while preserving auditability.
+
+## Key Deliverables
+- Persisted queue batching in DuckDB with refill thresholds and audit trail exclusions.
+- Read-only SQL execution with Snowflake-safe validation + PII guardrails.
+- Cached trigger checks (MA/NJ/PA) logged once per case.
+- Unified logs for SQL, LLM prompts, and analyst notes in case timelines.
+- Manager-grade analytics page (throughput, rigor, compliance signals).
+- Draft notes save/load for in-progress work.
+- PDF export refinements (summary/appendix separation + layout fixes).
+
+## Analyst Workflow Alignment
+- Analysts can save drafts mid-case and resume without losing work.
+- SQL evidence is executed read-only and logged for transparency.
+- Trigger checks remain deterministic and auditable.
+- Manager view surfaces productivity, rigor, and compliance in one place.

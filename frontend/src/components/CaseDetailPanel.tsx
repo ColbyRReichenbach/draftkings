@@ -1,9 +1,9 @@
-import { CaseDetail, CaseStatusEntry } from '../types/risk';
+import { AuditEntry, CaseDetail, CaseStatusEntry } from '../types/risk';
 import { ScoreBreakdown } from './ScoreBreakdown';
-import { NudgePreview } from './NudgePreview';
+import { InfoBadge } from './InfoBadge';
 import { ActionBar } from './ActionBar';
 import { PromptLogPanel } from './PromptLogPanel';
-import { useNudgeValidation, usePromptLogs, useSemanticAudit } from '../hooks/useAi';
+import { usePromptLogs } from '../hooks/useAi';
 import { useStartCase } from '../hooks/useCaseTimeline';
 import { useUiStore } from '../state/useUiStore';
 import { useQueryClient } from '@tanstack/react-query';
@@ -14,41 +14,29 @@ interface CaseDetailPanelProps {
   detail: CaseDetail | null;
 }
 
+const SCORE_TOOLTIP =
+  'Normalized 0–1 scale. 0.00–0.39 = Low, 0.40–0.59 = Medium, 0.60–0.79 = High, 0.80–1.00 = Critical.';
+
+const KPI_TOOLTIPS: Record<string, string> = {
+  'Total Bets (7d)':
+    'Total count of bets in the last 7 days. Minimum 2 bets required for ratios to be meaningful.',
+  'Total Wagered (7d)':
+    'Total wagered amount over the last 7 days. Use with bet count to normalize behavior.',
+  'Loss Chase Score': `${SCORE_TOOLTIP} Higher values indicate bets placed after losses.`,
+  'Bet Escalation': `${SCORE_TOOLTIP} Higher values indicate larger bets after losses vs wins.`,
+  'Market Drift': `${SCORE_TOOLTIP} Higher values indicate drift into atypical sports/market tiers.`,
+  'Temporal Risk': `${SCORE_TOOLTIP} Higher values indicate abnormal late-night activity vs baseline.`,
+  'Gamalyze': `${SCORE_TOOLTIP} External neuro-marker composite (Mindway AI).`
+};
+
 export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
-  const semanticAudit = useSemanticAudit();
-  const nudgeValidation = useNudgeValidation();
   const promptLogs = usePromptLogs(detail?.player_id ?? null);
   const startCase = useStartCase();
   const setActiveTab = useUiStore((state) => state.setActiveTab);
   const setActiveAuditPlayerId = useUiStore((state) => state.setActiveAuditPlayerId);
   const reactQuery = useQueryClient();
 
-  const explanation = semanticAudit.data?.explanation ?? '';
-  const regulatoryNotes = semanticAudit.data?.regulatory_notes ?? detail?.regulatory_notes ?? '';
-  const nudgeText = semanticAudit.data?.draft_customer_nudge ?? detail?.draft_nudge ?? '';
-
-  const handleGenerateExplanation = () => {
-    if (!detail) {
-      return;
-    }
-    semanticAudit.mutate({
-      player_id: detail.player_id,
-      composite_risk_score: detail.composite_risk_score,
-      risk_category: detail.risk_category,
-      total_bets_7d: detail.evidence_snapshot.total_bets_7d,
-      total_wagered_7d: detail.evidence_snapshot.total_wagered_7d,
-      loss_chase_score: detail.evidence_snapshot.loss_chase_score,
-      bet_escalation_score: detail.evidence_snapshot.bet_escalation_score,
-      market_drift_score: detail.evidence_snapshot.market_drift_score,
-      temporal_risk_score: detail.evidence_snapshot.temporal_risk_score,
-      gamalyze_risk_score: detail.evidence_snapshot.gamalyze_risk_score,
-      state_jurisdiction: detail.state_jurisdiction
-    });
-  };
-
-  const handleValidateNudge = () => {
-    nudgeValidation.mutate(nudgeText);
-  };
+  const regulatoryNotes = detail?.regulatory_notes ?? '';
 
   const handleStartCase = () => {
     if (!detail) {
@@ -73,8 +61,6 @@ export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
       }
       return next;
     });
-    setActiveAuditPlayerId(detail.player_id);
-    setActiveTab('audit');
     startCase.mutate(
       {
         case_id: detail.case_id,
@@ -84,6 +70,28 @@ export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
       {
         onSuccess: () => {
           reactQuery.invalidateQueries({ queryKey: ['case-statuses'] });
+          reactQuery.invalidateQueries({ queryKey: ['risk-cases'] });
+          reactQuery.invalidateQueries({ queryKey: ['audit-trail'] });
+          reactQuery.setQueryData(['audit-trail'], (prev: AuditEntry[] | undefined) => {
+            const next = prev ? [...prev] : [];
+            const already = next.find((row) => row.case_id === detail.case_id);
+            if (!already) {
+              next.unshift({
+                audit_id: detail.case_id,
+                case_id: detail.case_id,
+                player_id: detail.player_id,
+                analyst_id: DEFAULT_ANALYST_ID,
+                action: 'Case review started',
+                risk_category: detail.risk_category,
+                state_jurisdiction: detail.state_jurisdiction,
+                timestamp: new Date().toISOString(),
+                notes: 'Audit trail entry created after Start Case Review.'
+              });
+            }
+            return next;
+          });
+          setActiveAuditPlayerId(detail.player_id);
+          setActiveTab('audit');
         }
       }
     );
@@ -127,21 +135,21 @@ export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
         </div>
       </div>
 
-      <div className="panel-sheen rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+      <div className="panel-sheen rounded-2xl border border-slate-800 bg-slate-900/70 p-4 overflow-visible">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Evidence Snapshot</p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl bg-slate-950/60 p-3">
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <InfoBadge label={KPI_TOOLTIPS['Total Bets (7d)']} className="rounded-xl bg-slate-950/60 p-3">
             <p className="text-xs text-slate-400">Total Bets (7d)</p>
             <p className="text-lg font-semibold text-slate-100">
               {detail.evidence_snapshot.total_bets_7d}
             </p>
-          </div>
-          <div className="rounded-xl bg-slate-950/60 p-3">
+          </InfoBadge>
+          <InfoBadge label={KPI_TOOLTIPS['Total Wagered (7d)']} className="rounded-xl bg-slate-950/60 p-3">
             <p className="text-xs text-slate-400">Total Wagered (7d)</p>
             <p className="text-lg font-semibold text-slate-100">
               ${detail.evidence_snapshot.total_wagered_7d.toLocaleString()}
             </p>
-          </div>
+          </InfoBadge>
           <div className="rounded-xl bg-slate-950/60 p-3">
             <p className="text-xs text-slate-400">Regulatory Notes</p>
             <p className="text-sm text-slate-300">{regulatoryNotes}</p>
@@ -149,11 +157,54 @@ export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
           <div className="rounded-xl bg-slate-950/60 p-3">
             <p className="text-xs text-slate-400">AI Summary</p>
             <p className="text-sm text-slate-300">
-              {explanation
-                ? explanation
-                : 'No AI summary yet. Click “Draft AI Summary” to generate a draft.'}
+              No AI summary yet. Use the Case File workbench to draft an AI summary.
             </p>
           </div>
+          <InfoBadge label={KPI_TOOLTIPS['Loss Chase Score']} className="rounded-xl bg-slate-950/60 p-3">
+            <p className="text-xs text-slate-400">Loss Chase Score</p>
+            <p className="text-lg font-semibold text-slate-100">
+              {detail.evidence_snapshot.loss_chase_score.toFixed(2)}
+              <span className="ml-2 text-xs text-slate-500">
+                ({Math.round(detail.evidence_snapshot.loss_chase_score * 100)}%)
+              </span>
+            </p>
+          </InfoBadge>
+          <InfoBadge label={KPI_TOOLTIPS['Bet Escalation']} className="rounded-xl bg-slate-950/60 p-3">
+            <p className="text-xs text-slate-400">Bet Escalation</p>
+            <p className="text-lg font-semibold text-slate-100">
+              {detail.evidence_snapshot.bet_escalation_score.toFixed(2)}
+              <span className="ml-2 text-xs text-slate-500">
+                ({Math.round(detail.evidence_snapshot.bet_escalation_score * 100)}%)
+              </span>
+            </p>
+          </InfoBadge>
+          <InfoBadge label={KPI_TOOLTIPS['Market Drift']} className="rounded-xl bg-slate-950/60 p-3">
+            <p className="text-xs text-slate-400">Market Drift</p>
+            <p className="text-lg font-semibold text-slate-100">
+              {detail.evidence_snapshot.market_drift_score.toFixed(2)}
+              <span className="ml-2 text-xs text-slate-500">
+                ({Math.round(detail.evidence_snapshot.market_drift_score * 100)}%)
+              </span>
+            </p>
+          </InfoBadge>
+          <InfoBadge label={KPI_TOOLTIPS['Temporal Risk']} className="rounded-xl bg-slate-950/60 p-3">
+            <p className="text-xs text-slate-400">Temporal Risk</p>
+            <p className="text-lg font-semibold text-slate-100">
+              {detail.evidence_snapshot.temporal_risk_score.toFixed(2)}
+              <span className="ml-2 text-xs text-slate-500">
+                ({Math.round(detail.evidence_snapshot.temporal_risk_score * 100)}%)
+              </span>
+            </p>
+          </InfoBadge>
+          <InfoBadge label={KPI_TOOLTIPS['Gamalyze']} className="rounded-xl bg-slate-950/60 p-3">
+            <p className="text-xs text-slate-400">Gamalyze</p>
+            <p className="text-lg font-semibold text-slate-100">
+              {detail.evidence_snapshot.gamalyze_risk_score.toFixed(2)}
+              <span className="ml-2 text-xs text-slate-500">
+                ({Math.round(detail.evidence_snapshot.gamalyze_risk_score * 100)}%)
+              </span>
+            </p>
+          </InfoBadge>
         </div>
       </div>
 
@@ -168,40 +219,6 @@ export const CaseDetailPanel = ({ detail }: CaseDetailPanelProps) => {
           rationale, SQL evidence, and final decision.
         </p>
       </div>
-
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">AI Actions</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={handleGenerateExplanation}
-            className="hover-lift rounded-xl bg-[#53B848] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-black hover:bg-[#469a3a]"
-            disabled={semanticAudit.isPending}
-          >
-            {semanticAudit.isPending ? 'Drafting...' : 'Draft AI Summary'}
-          </button>
-          <button
-            type="button"
-            onClick={handleValidateNudge}
-            className="hover-lift rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-300 hover:border-slate-500"
-            disabled={nudgeValidation.isPending}
-          >
-            {nudgeValidation.isPending ? 'Validating...' : 'Validate Nudge'}
-          </button>
-          {semanticAudit.isError ? (
-            <span className="text-xs text-red-300">AI request failed. Check API.</span>
-          ) : null}
-        </div>
-        <p className="mt-2 text-xs text-slate-400">
-          AI drafts are assistive only. Analyst approval is required.
-        </p>
-      </div>
-
-      <NudgePreview
-        nudgeText={nudgeText}
-        validationResult={nudgeValidation.data ?? null}
-        isValidating={nudgeValidation.isPending}
-      />
 
       <PromptLogPanel logs={promptLogs.data ?? []} />
 

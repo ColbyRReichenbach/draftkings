@@ -5,7 +5,12 @@ import {
   QueryDraftRequest,
   QueryDraftResponse,
   QueryLogEntry,
-  QueryLogRequest
+  QueryLogRequest,
+  NudgeLogRequest,
+  NudgeLogResponse,
+  SqlExecuteRequest,
+  SqlExecuteResponse,
+  TriggerCheckResult
 } from '../types/risk';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
@@ -55,6 +60,27 @@ export const queryClient = {
     }),
   getCaseStatuses: () =>
     request<CaseStatusEntry[]>('/api/cases/status', {
+      method: 'GET'
+    }),
+  executeSql: (payload: SqlExecuteRequest) =>
+    request<SqlExecuteResponse>('/api/sql/execute', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  runTriggerChecks: (playerId: string, force = false) =>
+    request<TriggerCheckResult[]>(
+      `/api/cases/trigger-check/${playerId}${force ? '?force=true' : ''}`,
+      {
+        method: 'POST'
+      }
+    ),
+  saveNudge: (payload: NudgeLogRequest) =>
+    request<NudgeLogResponse>('/api/interventions/nudge', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  getNudge: (playerId: string) =>
+    request<NudgeLogResponse>(`/api/interventions/nudge/${playerId}`, {
       method: 'GET'
     })
 };

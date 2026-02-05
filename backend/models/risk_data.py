@@ -45,6 +45,8 @@ class AuditTrailEntry(BaseModel):
     state_jurisdiction: str | None
     timestamp: str
     notes: str
+    nudge_status: str | None = None
+    nudge_excerpt: str | None = None
 
 
 class CaseFileResponse(BaseModel):
@@ -55,3 +57,4 @@ class CaseFileResponse(BaseModel):
     prompt_logs: list[dict]
     query_logs: list[dict]
     timeline: list[dict]
+    trigger_checks: list[dict] = []

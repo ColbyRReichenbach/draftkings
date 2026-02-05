@@ -10,6 +10,7 @@ from typing import AsyncIterator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 
 from ai_services.config import LLMConfig
 from ai_services.llm_safety_validator import LLMSafetyValidator
@@ -20,12 +21,15 @@ from backend.routers import ai as ai_router
 from backend.routers import cases as cases_router
 from backend.routers import data as data_router
 from backend.routers import interventions as interventions_router
+from backend.routers import sql as sql_router
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+load_dotenv()
 
 
 def _build_provider(config: LLMConfig) -> OpenAIProvider | None:
@@ -109,3 +113,4 @@ app.include_router(ai_router.router, prefix="/api/ai", tags=["AI"])
 app.include_router(interventions_router.router, prefix="/api/interventions", tags=["Interventions"])
 app.include_router(cases_router.router, prefix="/api/cases", tags=["Cases"])
 app.include_router(data_router.router, prefix="/api", tags=["Data"])
+app.include_router(sql_router.router, prefix="/api", tags=["SQL"])

@@ -164,4 +164,20 @@
 
 ---
 
+## Week 9 Extension: Analyst Ops + SQL Execution + Analytics ✓ COMPLETE
+
+**Delivered**:
+- Persisted queue batching in DuckDB with refill logic and audit trail exclusions
+- Read-only SQL execution endpoint with Snowflake-safe validation + PII guardrails
+- Deterministic trigger checks (MA/NJ/PA) cached and logged once per case
+- SQL + LLM logs unified in case timelines and audit trail summary
+- Manager-grade Analytics page (throughput, rigor, compliance signals)
+- Analyst draft notes save/load for in-progress cases
+- PDF export formatting fixes (clear summary vs appendix separation)
+- Tooltip reliability fixes (portal tooltips + clipped glow adjustments)
+
+**Notes**:
+- DuckDB timestamp/DATEADD compatibility handled via SQL rewrites + casts
+- SQL drafts now use live schema snapshot to prevent missing columns/tables
+
 [Continue through Week 10 if needed]
