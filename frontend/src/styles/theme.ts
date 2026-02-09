@@ -1,3 +1,5 @@
+// Theme constants aligned with new tailwind.config.ts
+
 export const DK_COLORS = {
   primary: {
     green: '#53B848',
@@ -12,33 +14,37 @@ export const DK_COLORS = {
     bgLight: '#0B0B0D',
     textPrimary: '#F8FAFC',
     textSecondary: '#94A3B8',
-    border: '#1F2937'
+    border: '#2A2A2A'
   }
 } as const;
 
 export const RISK_STYLES = {
   CRITICAL: {
-    bg: 'bg-red-500/10',
-    border: 'border-red-500',
-    text: 'text-red-200',
-    badge: 'bg-red-500 text-white'
+    bg: 'hover:bg-dk-red/5',
+    border: 'border-l-dk-red',
+    text: 'text-dk-red',
+    badge: 'bg-dk-red/10 text-dk-red border border-dk-red/20',
+    indicator: 'bg-dk-red'
   },
   HIGH: {
-    bg: 'bg-[#F3701B]/10',
-    border: 'border-[#F3701B]',
-    text: 'text-orange-200',
-    badge: 'bg-[#F3701B] text-white'
+    bg: 'hover:bg-dk-orange/5',
+    border: 'border-l-dk-orange',
+    text: 'text-dk-orange',
+    badge: 'bg-dk-orange/10 text-dk-orange border border-dk-orange/20',
+    indicator: 'bg-dk-orange'
   },
   MEDIUM: {
-    bg: 'bg-yellow-500/10',
-    border: 'border-yellow-500',
-    text: 'text-yellow-200',
-    badge: 'bg-yellow-500 text-black'
+    bg: 'hover:bg-dk-yellow/5',
+    border: 'border-l-dk-yellow',
+    text: 'text-dk-yellow',
+    badge: 'bg-dk-yellow/10 text-dk-yellow border border-dk-yellow/20',
+    indicator: 'bg-dk-yellow'
   },
   LOW: {
-    bg: 'bg-[#53B848]/10',
-    border: 'border-[#53B848]',
-    text: 'text-emerald-200',
-    badge: 'bg-[#53B848] text-black'
+    bg: 'hover:bg-dk-green/5',
+    border: 'border-l-dk-green',
+    text: 'text-dk-green',
+    badge: 'bg-dk-green/10 text-dk-green border border-dk-green/20',
+    indicator: 'bg-dk-green'
   }
 } as const;

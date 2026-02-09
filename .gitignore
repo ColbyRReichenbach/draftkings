@@ -54,3 +54,7 @@ frontend/src/components/__tests__/__snapshots__/
 # Vite build artifacts
 vite.config.d.ts
 vite.config.js
+
+# Portfolio artifacts (keep local)
+docs/case_reviews/
+docs/ANALYST_PLAYBOOK.md

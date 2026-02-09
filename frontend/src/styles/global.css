@@ -1,4 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap'); /* Just in case Oswald isn't enough */
+
 
 @tailwind base;
 @tailwind components;
@@ -6,27 +10,45 @@
 
 
 :root {
-  color-scheme: light;
+  color-scheme: dark; /* Force dark mode preference at root */
 }
 
 body {
   font-family: 'Inter', sans-serif;
-  background: radial-gradient(circle at top left, #15171d 0%, #0b0b0d 45%, #070707 100%);
-  color: #f8fafc;
+  background-color: #0B0B0B; /* DK Black */
+  color: #e2e8f0; /* slater-200 equivalent */
   min-height: 100vh;
+  /* Optional subtle noise texture can be added here if desired, but stick to solid + grid for now based on spec */
 }
 
 #root {
   min-height: 100vh;
 }
 
+/* Base utility for critical technical components */
 .glass-panel {
-  background: rgba(15, 17, 22, 0.86);
-  border: 1px solid rgba(38, 40, 48, 0.8);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(16px);
-  overflow: visible;
+  background: rgba(18, 18, 18, 0.95); /* Extremely dark, almost opaque */
+  border: 1px solid #2A2A2A; /* DK Border */
+  /* No heavy shadow, just a subtle depth if needed */
+  backdrop-filter: blur(8px); 
 }
+
+/* Custom scrollbar for webkit browsers to match the dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0B0B; 
+}
+::-webkit-scrollbar-thumb {
+  background: #2A2A2A; 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #53B848; /* DK Green on hover */
+}
+
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -46,39 +68,20 @@ body {
     animation: fadeIn 0.5s ease-out both;
   }
 
-  .hover-lift {
-    transition: transform 200ms ease, box-shadow 200ms ease;
-    will-change: transform;
+  /* Technical styling for hover interactions */
+  .hover-tech {
+    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .hover-tech:hover {
+    background-color: #1a1a1a; /* specific lighter shade for rows */
+    box-shadow: inset 2px 0 0 0 #53B848; /* Left border green glow on hover */
   }
 
-  .hover-lift:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
-  }
-
-  .ring-soft {
-    box-shadow: 0 0 0 1px rgba(82, 176, 72, 0.35);
-  }
-
-  .panel-sheen {
-    position: relative;
-    overflow: visible;
-  }
-
-  .panel-sheen::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: radial-gradient(circle at 85% 15%, rgba(83, 184, 72, 0.12) 0%, rgba(83, 184, 72, 0) 55%);
-    opacity: 0;
-    transition: opacity 300ms ease;
-    pointer-events: none;
-    clip-path: inset(0 round 24px);
-  }
-
-  .glass-panel.panel-sheen:hover::after {
-    opacity: 1;
+  /* Simplified sheen/glow for active elements */
+  .active-glow {
+    box-shadow: 0 0 15px rgba(83, 184, 72, 0.15); /* Subtle green glow */
+    border-color: #53B848;
   }
 }
 
