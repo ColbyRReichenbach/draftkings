@@ -27,6 +27,10 @@ If a column is not listed here, it is **not available** in the dev environment.
 ### STAGING.STG_PLAYER_PROFILES (physical: `staging_staging.stg_player_profiles`)
 `player_id`, `first_name`, `last_name`, `email`, `age`, `state_jurisdiction`, `risk_cohort`
 
+### STAGING.STG_GAMALYZE_SCORES (physical: `staging_staging.stg_gamalyze_scores`)
+`assessment_id`, `player_id`, `assessment_date`, `sensitivity_to_reward`, `sensitivity_to_loss`,
+`risk_tolerance`, `decision_consistency`, `overall_risk_rating`, `loaded_at`, `gamalyze_version`
+
 ### PROD.RG_RISK_SCORES (physical: `staging_prod.rg_risk_scores`)
 `player_id`, `loss_chase_score`, `bet_escalation_score`, `market_drift_score`, `temporal_risk_score`,
 `gamalyze_risk_score`, `composite_risk_score`, `risk_category`, `calculated_at`
@@ -118,6 +122,7 @@ If a column is not listed here, it is **not available** in the dev environment.
 | `sensitivity_to_loss` | INT | Neuro-marker score (0-100) | NOT NULL, 0-100 | 82 |
 | `risk_tolerance` | INT | Neuro-marker score (0-100) | NOT NULL, 0-100 | 75 |
 | `decision_consistency` | INT | Neuro-marker score (0-100, higher=better) | NOT NULL, 0-100 | 42 |
+| `gamalyze_version` | VARCHAR(20) | Gamalyze model version | NOT NULL | "v3.2.1" |
 | `overall_risk_rating` | VARCHAR(20) | Gamalyze's overall assessment | NOT NULL | "HIGH_RISK" |
 | `loaded_at` | TIMESTAMP_NTZ | When loaded to staging | NOT NULL | "2026-01-15 20:30:00" |
 

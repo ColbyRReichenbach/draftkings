@@ -4,6 +4,7 @@ Seed a demo DuckDB with realistic RG data for portfolio hosting.
 Creates:
   - staging_staging.stg_player_profiles
   - staging_staging.stg_bet_logs
+  - staging_staging.stg_gamalyze_scores
   - staging_prod.rg_risk_scores
   - staging_prod.rg_intervention_queue
 
@@ -26,6 +27,7 @@ SPORTS = ["NFL", "NBA", "NHL", "MLB", "SOCCER", "UFC", "TENNIS"]
 MARKETS = ["Moneyline", "Point Spread", "Totals", "Player Prop", "Parlay"]
 MARKET_TIERS = [1.0, 0.7, 0.5, 0.2]
 OUTCOMES = ["win", "loss", "push"]
+GAMALYZE_VERSION = "v3.2.1"
 
 
 def _score_range(category: str) -> tuple[float, float]:
@@ -55,6 +57,42 @@ def _derive_components(composite: float) -> dict[str, float]:
         "temporal_risk_score": round(jitter(), 4),
         "gamalyze_risk_score": round(jitter(), 4),
     }
+
+
+def _clamp(value: float, low: float = 0.0, high: float = 100.0) -> float:
+    return max(low, min(high, value))
+
+
+def _gamalyze_components(score: float) -> dict[str, int]:
+    base = score * 100.0
+    sensitivity_to_loss = _clamp(random.gauss(base + 6.0, 12.0))
+    sensitivity_to_reward = _clamp(random.gauss(base, 12.0))
+    risk_tolerance = _clamp(random.gauss(base, 12.0))
+    decision_consistency = _clamp(random.gauss(100.0 - base, 12.0))
+    return {
+        "sensitivity_to_loss": int(round(sensitivity_to_loss)),
+        "sensitivity_to_reward": int(round(sensitivity_to_reward)),
+        "risk_tolerance": int(round(risk_tolerance)),
+        "decision_consistency": int(round(decision_consistency)),
+    }
+
+
+def _gamalyze_score_from_components(components: dict[str, int]) -> float:
+    return round(
+        (components["sensitivity_to_loss"] / 100.0) * 0.40
+        + (components["sensitivity_to_reward"] / 100.0) * 0.25
+        + (components["risk_tolerance"] / 100.0) * 0.25
+        + ((100 - components["decision_consistency"]) / 100.0) * 0.10,
+        4,
+    )
+
+
+def _overall_risk_rating(score: float) -> str:
+    if score >= 0.80:
+        return "HIGH_RISK"
+    if score >= 0.60:
+        return "MODERATE_RISK"
+    return "LOW_RISK"
 
 
 def _primary_driver(components: dict[str, float]) -> str:
@@ -116,6 +154,7 @@ def seed_demo_db(db_path: str, player_count: int) -> None:
     risk_scores = []
     intervention_queue = []
     bets = []
+    gamalyze_scores = []
 
     bet_id_counter = 1
 
@@ -126,6 +165,9 @@ def seed_demo_db(db_path: str, player_count: int) -> None:
 
         composite = _sample_score(category)
         components = _derive_components(composite)
+        gamalyze_components = _gamalyze_components(components["gamalyze_risk_score"])
+        components["gamalyze_risk_score"] = _gamalyze_score_from_components(gamalyze_components)
+        assessment_date = date.today() - timedelta(days=random.randint(0, 30))
         calculated_at = now - timedelta(hours=random.randint(1, 72))
 
         players.append(
@@ -171,6 +213,21 @@ def seed_demo_db(db_path: str, player_count: int) -> None:
                 components["temporal_risk_score"],
                 components["gamalyze_risk_score"],
                 calculated_at,
+            )
+        )
+
+        gamalyze_scores.append(
+            (
+                f"GMLY_{idx + 1:06d}",
+                player_id,
+                assessment_date,
+                gamalyze_components["sensitivity_to_reward"],
+                gamalyze_components["sensitivity_to_loss"],
+                gamalyze_components["risk_tolerance"],
+                gamalyze_components["decision_consistency"],
+                _overall_risk_rating(components["gamalyze_risk_score"]),
+                now,
+                GAMALYZE_VERSION,
             )
         )
 
@@ -260,6 +317,28 @@ def seed_demo_db(db_path: str, player_count: int) -> None:
     conn.executemany(
         "INSERT INTO staging_staging.stg_bet_logs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         bets,
+    )
+
+    drop_object("staging_staging.stg_gamalyze_scores")
+    conn.execute(
+        """
+        CREATE TABLE staging_staging.stg_gamalyze_scores (
+            assessment_id VARCHAR,
+            player_id VARCHAR,
+            assessment_date DATE,
+            sensitivity_to_reward INTEGER,
+            sensitivity_to_loss INTEGER,
+            risk_tolerance INTEGER,
+            decision_consistency INTEGER,
+            overall_risk_rating VARCHAR,
+            loaded_at TIMESTAMP,
+            gamalyze_version VARCHAR
+        )
+        """
+    )
+    conn.executemany(
+        "INSERT INTO staging_staging.stg_gamalyze_scores VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        gamalyze_scores,
     )
 
     drop_object("staging_prod.rg_risk_scores")

@@ -18,6 +18,11 @@ STAGING.STG_BET_LOGS
 STAGING.STG_PLAYER_PROFILES
 - player_id, first_name, last_name, email, age, state_jurisdiction, risk_cohort
 
+STAGING.STG_GAMALYZE_SCORES
+- assessment_id, player_id, assessment_date, sensitivity_to_reward,
+  sensitivity_to_loss, risk_tolerance, decision_consistency,
+  overall_risk_rating, loaded_at, gamalyze_version
+
 PROD.RG_RISK_SCORES
 - player_id, composite_risk_score, risk_category, calculated_at,
   loss_chase_score, bet_escalation_score, market_drift_score,
@@ -32,6 +37,7 @@ PROD.RG_INTERVENTION_QUEUE
 _TABLE_ALIASES = [
     ("STAGING.STG_BET_LOGS", "stg_bet_logs"),
     ("STAGING.STG_PLAYER_PROFILES", "stg_player_profiles"),
+    ("STAGING.STG_GAMALYZE_SCORES", "stg_gamalyze_scores"),
     ("PROD.RG_RISK_SCORES", "rg_risk_scores"),
     ("PROD.RG_INTERVENTION_QUEUE", "rg_intervention_queue"),
 ]

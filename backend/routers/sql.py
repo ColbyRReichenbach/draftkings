@@ -26,7 +26,13 @@ _DISALLOWED = re.compile(
 )
 
 _SCHEMA_CANDIDATES = ("PROD", "staging_prod", "STAGING_PROD", "staging_staging", "STAGING_STAGING")
-_ALLOWED_TABLES = ("stg_bet_logs", "stg_player_profiles", "rg_risk_scores", "rg_intervention_queue")
+_ALLOWED_TABLES = (
+    "stg_bet_logs",
+    "stg_player_profiles",
+    "stg_gamalyze_scores",
+    "rg_risk_scores",
+    "rg_intervention_queue",
+)
 _COLUMN_ERROR = re.compile(r'Referenced column \"(?P<column>[^\"]+)\" not found', re.IGNORECASE)
 _CANDIDATE_BINDINGS = re.compile(r"Candidate bindings: (?P<candidates>.+)", re.IGNORECASE)
 _DATEADD_PATTERN = re.compile(
@@ -176,7 +182,7 @@ def _format_column_error(message: str, db_path: str) -> str | None:
         detail += f" Did you mean: {', '.join(suggestions)}?"
     detail += (
         " Use columns from STAGING.STG_BET_LOGS, STAGING.STG_PLAYER_PROFILES, "
-        "PROD.RG_RISK_SCORES, or PROD.RG_INTERVENTION_QUEUE."
+        "STAGING.STG_GAMALYZE_SCORES, PROD.RG_RISK_SCORES, or PROD.RG_INTERVENTION_QUEUE."
     )
     return detail
 
