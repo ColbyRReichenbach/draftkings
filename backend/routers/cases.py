@@ -17,6 +17,7 @@ from backend.models.queries import (
     TriggerCheckResult,
 )
 from backend.utils.pii import find_pii_column, redact_text
+from backend.utils.supabase_client import insert_audit
 
 router = APIRouter()
 
@@ -593,6 +594,22 @@ async def submit_case(
         db_path=db_path,
     )
     started_at = started_row[0]["started_at"] if started_row else None
+
+    # Persist audit trail to Supabase (best-effort; non-blocking)
+    try:
+        audit_entry = {
+            "audit_id": f"AUD-{payload.case_id}-{now}",
+            "case_id": payload.case_id,
+            "player_id": payload.player_id,
+            "analyst_id": payload.analyst_id,
+            "action": STATUS_SUBMITTED,
+            "notes": None,
+            "created_at": now,
+        }
+        insert_audit(audit_entry)
+    except Exception:
+        # insert_audit logs internally; do not block response on failure
+        pass
 
     return CaseStatusEntry(
         case_id=payload.case_id,

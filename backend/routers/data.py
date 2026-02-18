@@ -89,12 +89,20 @@ def _case_id(player_id: str) -> str:
 
 
 def _key_evidence(row: dict) -> list[str]:
+    def score(value: object) -> float:
+        if value is None:
+            return 0.0
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 0.0
+
     scores = {
-        "Loss chase": row.get("loss_chase_score", 0.0),
-        "Bet escalation": row.get("bet_escalation_score", 0.0),
-        "Market drift": row.get("market_drift_score", 0.0),
-        "Temporal risk": row.get("temporal_risk_score", 0.0),
-        "Gamalyze": row.get("gamalyze_risk_score", 0.0),
+        "Loss chase": score(row.get("loss_chase_score")),
+        "Bet escalation": score(row.get("bet_escalation_score")),
+        "Market drift": score(row.get("market_drift_score")),
+        "Temporal risk": score(row.get("temporal_risk_score")),
+        "Gamalyze": score(row.get("gamalyze_risk_score")),
     }
     ranked = sorted(scores.items(), key=lambda item: item[1], reverse=True)[:3]
     return [f"{label} {value:.2f}" for label, value in ranked]
@@ -299,13 +307,32 @@ def _insert_queue_entries(rows: list[dict], batch_id: str, db_path: str) -> None
         )
 
 
+def _prune_stale_queue_entries(db_path: str, risk_schema: str) -> None:
+    execute(
+        """
+        DELETE FROM rg_queue_cases q
+        WHERE q.status = 'QUEUED'
+          AND NOT EXISTS (
+              SELECT 1
+              FROM {risk_schema}.RG_RISK_SCORES r
+              WHERE r.player_id = q.player_id
+          )
+        """.format(risk_schema=risk_schema),
+        db_path=db_path,
+    )
+
+
 def _refill_queue_if_needed(db_path: str) -> None:
+    risk_schema = _resolve_schema("rg_risk_scores", db_path)
+    _prune_stale_queue_entries(db_path, risk_schema)
+
     current_count = _queued_count(db_path)
     if current_count >= _QUEUE_REFILL_AT:
         return
 
-    risk_schema = _resolve_schema("rg_risk_scores", db_path)
-    target_add = _QUEUE_TARGET if current_count == 0 else _QUEUE_BATCH
+    target_add = _QUEUE_TARGET - current_count
+    if target_add <= 0:
+        return
     batch_id = str(uuid4())
     selected: list[dict] = []
     selected_ids: set[str] = set()
@@ -361,14 +388,14 @@ async def get_queue(limit: int = 200, db_path: str = Depends(get_db_path)) -> li
             q.case_id,
             q.player_id,
             q.assigned_at,
-            r.composite_risk_score,
-            r.risk_category,
-            r.calculated_at,
-            r.loss_chase_score,
-            r.bet_escalation_score,
-            r.market_drift_score,
-            r.temporal_risk_score,
-            r.gamalyze_risk_score,
+            COALESCE(r.composite_risk_score, 0.0) AS composite_risk_score,
+            COALESCE(r.risk_category, 'LOW') AS risk_category,
+            COALESCE(r.calculated_at, q.assigned_at) AS calculated_at,
+            COALESCE(r.loss_chase_score, 0.0) AS loss_chase_score,
+            COALESCE(r.bet_escalation_score, 0.0) AS bet_escalation_score,
+            COALESCE(r.market_drift_score, 0.0) AS market_drift_score,
+            COALESCE(r.temporal_risk_score, 0.0) AS temporal_risk_score,
+            COALESCE(r.gamalyze_risk_score, 0.0) AS gamalyze_risk_score,
             p.state_jurisdiction
         FROM rg_queue_cases q
         LEFT JOIN {schema}.RG_RISK_SCORES r
@@ -437,12 +464,21 @@ async def get_case_detail(
     row = score_rows[0]
     bet_rows = query_rows(
         """
+        WITH ref AS (
+            SELECT
+                COALESCE(
+                    MAX(bet_timestamp),
+                    CAST(CURRENT_TIMESTAMP AS TIMESTAMP)
+                ) AS as_of_ts
+            FROM {staging}.STG_BET_LOGS
+        )
         SELECT
             COUNT(*) AS total_bets_7d,
             COALESCE(SUM(bet_amount), 0) AS total_wagered_7d
-        FROM {staging}.STG_BET_LOGS
+        FROM {staging}.STG_BET_LOGS, ref
         WHERE player_id = ?
-          AND bet_timestamp >= CAST(CURRENT_TIMESTAMP AS TIMESTAMP) - INTERVAL '7 days'
+          AND bet_timestamp >= ref.as_of_ts - INTERVAL '7 days'
+          AND bet_timestamp <= ref.as_of_ts
         """.format(staging=_resolve_schema("stg_bet_logs", db_path)),
         (player_id,),
         db_path=db_path,

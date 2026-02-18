@@ -384,6 +384,12 @@ def seed_demo_db(db_path: str, player_count: int) -> None:
         intervention_queue,
     )
 
+    # Clear runtime queue so stale player IDs from prior seeds do not persist.
+    try:
+        conn.execute("DELETE FROM rg_queue_cases")
+    except duckdb.CatalogException:
+        pass
+
     conn.close()
 
     print(f"Seeded {player_count} players with majority critical/high/medium cases.")
