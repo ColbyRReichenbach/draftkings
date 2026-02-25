@@ -3,7 +3,15 @@ import { RiskDistributionChart } from '../components/RiskDistributionChart';
 import { useAnalyticsSummary } from '../hooks/useRiskCases';
 
 export const AnalyticsPage = () => {
-  const { data: summary } = useAnalyticsSummary();
+  const { data: summary, error } = useAnalyticsSummary();
+
+  if (error) {
+    return (
+      <div className="glass-panel rounded-2xl border border-rose-800/60 bg-rose-950/20 p-6 text-rose-200">
+        Unable to load analytics summary. In live mode this requires backend API access.
+      </div>
+    );
+  }
 
   if (!summary) {
     return (

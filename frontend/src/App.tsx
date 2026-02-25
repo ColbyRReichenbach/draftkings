@@ -5,6 +5,7 @@ import { AnalyticsPage } from './pages/AnalyticsPage';
 import { CaseDetailPage } from './pages/CaseDetailPage';
 import { QueuePage } from './pages/QueuePage';
 import { useUiStore } from './state/useUiStore';
+import { dataMode } from './api/httpClient';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ??
@@ -75,11 +76,18 @@ const BackendWarmupOverlay = ({
 
 const App = () => {
   const activeTab = useUiStore((state) => state.activeTab);
+  const isStaticMode = dataMode === 'static';
   const [backendStatus, setBackendStatus] = useState<BackendStatus>('checking');
   const [retryIn, setRetryIn] = useState(0);
   const [retryCount, setRetryCount] = useState(0);
 
   const checkBackend = useCallback(async () => {
+    if (isStaticMode) {
+      setBackendStatus('ready');
+      setRetryIn(0);
+      setRetryCount(0);
+      return true;
+    }
     try {
       const response = await fetch(`${API_BASE_URL}/health`, {
         cache: 'no-store'
@@ -97,9 +105,16 @@ const App = () => {
     setRetryIn(8);
     setRetryCount((count) => count + 1);
     return false;
-  }, []);
+  }, [isStaticMode]);
 
   useEffect(() => {
+    if (isStaticMode) {
+      setBackendStatus('ready');
+      setRetryIn(0);
+      setRetryCount(0);
+      return;
+    }
+
     let retryTimeout: number | undefined;
     let countdownInterval: number | undefined;
 
@@ -133,7 +148,7 @@ const App = () => {
         window.clearInterval(countdownInterval);
       }
     };
-  }, [checkBackend]);
+  }, [checkBackend, isStaticMode]);
 
   const renderTab = () => {
     switch (activeTab) {
@@ -166,14 +181,17 @@ const App = () => {
     <LayoutShell
       title="Responsible Gaming Command Center"
       subtitle="Prioritize high-risk cases, review evidence, and document interventions in one unified workflow."
+      mode={isStaticMode ? 'static' : 'api'}
     >
       {renderedTab}
-      <BackendWarmupOverlay
-        status={backendStatus}
-        retryIn={retryIn}
-        onRetry={checkBackend}
-        showManualWake={retryCount >= 1}
-      />
+      {!isStaticMode ? (
+        <BackendWarmupOverlay
+          status={backendStatus}
+          retryIn={retryIn}
+          onRetry={checkBackend}
+          showManualWake={retryCount >= 1}
+        />
+      ) : null}
     </LayoutShell>
   );
 };

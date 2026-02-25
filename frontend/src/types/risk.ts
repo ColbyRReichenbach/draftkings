@@ -243,6 +243,8 @@ export interface CaseTimelineEntry {
   event_type: string;
   event_detail: string;
   created_at: string;
+  source?: 'backend' | 'static_replay';
+  ephemeral?: boolean;
 }
 
 export type CaseStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED';

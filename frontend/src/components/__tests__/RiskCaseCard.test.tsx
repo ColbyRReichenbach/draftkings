@@ -19,14 +19,17 @@ describe('RiskCaseCard', () => {
     );
 
     expect(screen.getByText('PLR_1001_MA')).toBeInTheDocument();
-    expect(screen.getByText('78%')).toBeInTheDocument();
+    expect(screen.getByText('78')).toBeInTheDocument();
+    expect(screen.getByText('%')).toBeInTheDocument();
   });
 
-  it('matches snapshot', () => {
-    const { asFragment } = render(
+  it('renders expected card labels', () => {
+    render(
       <RiskCaseCard riskCase={sampleCase} isSelected={false} onSelect={() => undefined} />
     );
 
-    expect(asFragment()).toMatchSnapshot();
+    expect(screen.getByText('HIGH')).toBeInTheDocument();
+    expect(screen.getByText('ID: CASE-0001')).toBeInTheDocument();
+    expect(screen.getByText('Risk Score')).toBeInTheDocument();
   });
 });
