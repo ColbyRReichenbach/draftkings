@@ -13,6 +13,7 @@ htmlcov/
 
 # Generated data (regenerate: python -m data_generation && python scripts/load_to_duckdb.py)
 data/*.csv
+data/*.db
 data/test_run/
 data/*.parquet
 data/*.jsonl
@@ -30,6 +31,7 @@ profiles.yml
 dbt_project/target/
 dbt_project/logs/
 dbt_project/dbt_packages/
+dbt_project/.user.yml
 
 # Node/React
 node_modules/
