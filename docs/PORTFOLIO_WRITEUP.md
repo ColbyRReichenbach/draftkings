@@ -1,22 +1,29 @@
-# DK Sentinel — Responsible Gaming Analytics Platform
+# Portfolio Summary
 
-DK Sentinel is a Responsible Gaming analytics platform built to mirror DraftKings’ analyst workflows using an aligned modern stack (SQL-first analytics, Snowflake-style querying, dashboards, audit logs, and AI-assist tooling). It simulates queue triage, case review, evidence gathering, regulatory trigger checks, and compliance-style reporting.
+I built DK Sentinel as a Responsible Gaming analytics portfolio project to demonstrate how I work as a SQL-first, modern-stack analyst.
 
-## Why It Matters
-Responsible gaming requires fast, explainable, and auditable decisions. This project demonstrates how I build analyst-first workflows that combine SQL rigor, AI-assist tooling, and professional reporting while keeping human accountability front-and-center.
+## What This Project Demonstrates
+- Building an end-to-end analyst workflow instead of isolated dashboards.
+- Designing evidence-driven case handling with auditable logs.
+- Using LLMs as assistive tools with explicit human approval points.
+- Constraining generated SQL to Snowflake-compatible syntax and known schema context.
 
-## Core Capabilities
-- Queue → Case File → Audit Trail workflow
-- SQL evidence logging with output previews
-- AI assist with transparency (not replacement)
-- State-specific regulatory trigger checks
-- Professional PDF reporting
+## Implemented Scope
+- Queue and case lifecycle endpoints.
+- Case file workflow with query logs, AI logs, notes, nudges, and timeline.
+- Prompt router for SQL/regulatory/external/general analyst prompts.
+- Read-only SQL execution endpoint with safeguards.
+- Trigger checks for MA/NJ/PA.
+- Static demo export + live API mode.
 
-## What It Shows
-- Advanced SQL and evidence-based analysis
-- Data product development (dashboards, reports, audit logs)
-- AI-enabled productivity with governance
-- Reproducible workflows and strong documentation
+## Why It Is Relevant For Hiring
+This repo is focused on analyst operating quality:
+- reproducibility,
+- auditability,
+- and clear decision ownership.
 
-## Tech Stack
-React, TypeScript, FastAPI, DuckDB, Snowflake-style SQL, AI prompt routing, PDF reporting.
+I intentionally prioritize workflow design and analytical governance over model hype.
+
+## Boundaries
+- Data is synthetic and intended for pipeline and workflow validation.
+- Results should not be interpreted as real-world prevalence or operational KPI impact.
