@@ -4,7 +4,7 @@ Synthetic data generator for responsible gambling analytics portfolio project.
 
 ## Overview
 
-Generates 10,000 players with ~500,000 bets exhibiting research-backed responsible gambling patterns including:
+Generates 10,000 players with approximately 500,000 bets and synthetic behavioral patterns including:
 - Statistical correlations (Cholesky decomposition)
 - Loss-chasing behavior (finite state machine)
 - Market drift patterns (NFL → Table Tennis for high-risk players)
@@ -83,16 +83,16 @@ ASSESS_PLR_0001_MA,PLR_0001_MA,2025-12-15,32.45,41.22,28.76,72.15,v3.2.1
 
 ## Key Features
 
-### 1. Research-Backed Patterns
+### 1. Pattern Design Inputs
 
-- **Prevalence rates**: NCPG (2023) - 90% recreational, 8% moderate risk, 2% problem gambling
-- **Sport distribution**: AGA (2024) - NFL 40%, NBA 25%, etc.
-- **Temporal patterns**: Auer & Griffiths (2022) - Late-night betting 3-5x higher in problem gamblers
-- **Gamalyze correlations**: Mindway AI technical documentation
+- **Prevalence mix**: portfolio-oriented cohort mix tuned for sufficient review cases
+- **Sport distribution targets**: weighted toward major US markets with niche tails
+- **Temporal patterns**: elevated late-night behavior in higher-risk cohorts
+- **Neuro-marker component**: synthetic Gamalyze-style score generation
 
-### 2. Statistical Correlations
+### 2. Statistical Correlations (Current State)
 
-Target correlations achieved via Cholesky decomposition:
+Target correlations are seeded via Cholesky decomposition, then attenuated by downstream state-machine behavior:
 
 | Variables | Target r | Achieved r | Status |
 |-----------|----------|------------|--------|
@@ -176,7 +176,7 @@ data_generation/
 
 ## Validation
 
-The generator includes a comprehensive validation suite:
+The generator includes a validation suite:
 
 **Tier 1: Count Validations**
 - Players: Exactly 10,000
@@ -189,11 +189,10 @@ The generator includes a comprehensive validation suite:
 - All bet amounts > $0
 
 **Tier 3: Distributions**
-- Chi-square test: Sport distribution matches AGA proportions (p>0.05)
-- K-S test: Gamalyze scores approximately normal (p>0.05)
+- Distribution checks are advisory in this portfolio project and can fail depending on sample dynamics and tuning.
 
 **Tier 4: Correlations**
-- All target correlations within ±0.05 tolerance
+- Correlation checks are advisory; not all targets currently converge within ±0.05.
 
 Run validation:
 ```bash
@@ -203,7 +202,7 @@ python -m data_generation --no-validate  # Skip for speed
 
 ## Performance
 
-Benchmarks on MacBook Pro M1 (90-day window; approximate):
+Benchmarks on MacBook Pro M1 (90-day window; approximate, non-SLA):
 
 | Players | Bets | Time |
 |---------|------|------|
@@ -222,32 +221,19 @@ python -m data_generation --seed 42  # Same data every time
 python -m data_generation --seed 123  # Different data, same statistics
 ```
 
-## Integration with dbt Pipeline
+## Integration with Local Pipeline
 
-After generation, load into Snowflake:
+After generation, load into the local DuckDB pipeline:
 
 ```sql
--- Create raw tables
-CREATE TABLE RAW.PLAYERS (...);
-CREATE TABLE RAW.BET_LOGS (...);
-CREATE TABLE RAW.GAMALYZE_SCORES (...);
-
--- Load CSVs
-COPY INTO RAW.PLAYERS FROM @my_stage/players.csv
-  FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);
-
-COPY INTO RAW.BET_LOGS FROM @my_stage/bets.csv
-  FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);
-
-COPY INTO RAW.GAMALYZE_SCORES FROM @my_stage/gamalyze_scores.csv
-  FILE_FORMAT = (TYPE = 'CSV' SKIP_HEADER = 1);
+python scripts/load_to_duckdb.py
 ```
 
-Then run dbt pipeline:
+Then run dbt transforms:
 
 ```bash
-dbt run  # Transform raw → staging → intermediate → marts
-dbt test  # Validate data contracts and business logic
+dbt run
+dbt test
 ```
 
 ## Troubleshooting
@@ -258,9 +244,9 @@ pip install -r requirements.txt
 ```
 
 **Validation tests failing**
-- For small samples (<1000 players), some tests may fail due to sampling variance
-- Tier 3 (distributions) and Tier 4 (correlations) currently fail at 10K — see tuning notes in `DATA_GENERATION_METHODOLOGY.md`
-- Correlations require large samples to converge
+- For small samples (<1000 players), checks may fail due to sampling variance.
+- Tier 3/4 checks are advisory and may fail at 10K depending on tuning.
+- See `docs/DATA_GENERATION_METHODOLOGY.md` for current limitations.
 
 **Slow generation**
 - Use `--n-players 100` for faster testing
