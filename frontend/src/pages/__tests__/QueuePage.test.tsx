@@ -12,4 +12,9 @@ describe('QueuePage', () => {
     renderWithClient(<QueuePage />);
     expect(await screen.findByText('Search Player')).toBeInTheDocument();
   });
+
+  it('shows empty-state message when all queue items are already in audit/status', async () => {
+    renderWithClient(<QueuePage />);
+    expect(await screen.findByText('No cases match the current filters.')).toBeInTheDocument();
+  });
 });

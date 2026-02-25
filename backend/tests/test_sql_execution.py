@@ -74,6 +74,19 @@ def test_sql_execute_guardrails(client):
     assert bad_response.status_code == 400
 
 
+def test_sql_execute_blocks_pii_columns(client):
+    response = client.post(
+        "/api/sql/execute",
+        json={
+            "player_id": "PLR_1000_MA",
+            "sql_text": "SELECT first_name FROM STAGING.STG_PLAYER_PROFILES",
+            "purpose": "PII access attempt",
+        },
+    )
+    assert response.status_code == 400
+    assert "PII column" in response.text
+
+
 def test_trigger_check_ma(client):
     db_path = os.environ["DUCKDB_PATH"]
     player_id = "PLR_2000_MA"
@@ -84,3 +97,32 @@ def test_trigger_check_ma(client):
     data = response.json()
     assert len(data) == 1
     assert data[0]["state"] == "MA"
+
+
+def test_trigger_check_cache_and_force(client):
+    db_path = os.environ["DUCKDB_PATH"]
+    player_id = "PLR_2111_MA"
+    _seed_trigger_tables(db_path, player_id, "MA")
+
+    first = client.post(f"/api/cases/trigger-check/{player_id}")
+    assert first.status_code == 200
+
+    second = client.post(f"/api/cases/trigger-check/{player_id}")
+    assert second.status_code == 200
+
+    conn = duckdb.connect(db_path)
+    cached_count = conn.execute(
+        "SELECT COUNT(*) FROM rg_trigger_check_log WHERE player_id = ?",
+        (player_id,),
+    ).fetchone()[0]
+    assert cached_count == 1
+
+    forced = client.post(f"/api/cases/trigger-check/{player_id}?force=true")
+    assert forced.status_code == 200
+
+    forced_count = conn.execute(
+        "SELECT COUNT(*) FROM rg_trigger_check_log WHERE player_id = ?",
+        (player_id,),
+    ).fetchone()[0]
+    conn.close()
+    assert forced_count == 2
