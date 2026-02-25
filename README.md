@@ -1,73 +1,114 @@
-# DK SENTINEL: Responsible Gaming Intelligence System
+# DK Sentinel
 
-Portfolio project for DraftKings Analyst II, RG Analytics role (Job ID: jr13280).
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)
+![DuckDB](https://img.shields.io/badge/DuckDB-Analytics-FFF000?logo=duckdb&logoColor=000)
+![dbt](https://img.shields.io/badge/dbt-Transformations-FF694B?logo=dbt&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=000)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-LLM_Assist-412991?logo=openai&logoColor=white)
+![Tests](https://img.shields.io/badge/Tests-Pytest%20%7C%20Vitest-6E9F18)
+
+I built this project to demonstrate how I operate as a modern Responsible Gaming analyst: SQL-first investigations, auditable AI assistance, and strict human-in-the-loop decision ownership.
+
+## Executive Summary
+- End-to-end analyst workflow: queue -> case detail -> case file -> submission.
+- AI router for analyst prompts (SQL draft, regulatory context, external context, general analysis).
+- Snowflake-oriented SQL guardrails + schema-aware prompting.
+- Read-only SQL execution endpoint with safety constraints.
+- MA/NJ/PA trigger checks with reproducible logs.
+- Dual delivery model: live API mode and static fixture mode.
+
+## Why I Chose This Infrastructure
+- **DuckDB** for fast local iteration and deterministic, file-based reproducibility during development.
+- **Snowflake-style SQL constraints** to mirror production warehouse query expectations while running locally.
+- **FastAPI** to expose clear, testable analyst workflow interfaces (queue, case, AI, SQL, interventions).
+- **Routed LLM assist** to reduce repetitive SQL drafting and context switching while preserving analyst ownership.
+- **Static + live separation** to support reliable demos without losing production-like API workflow behavior.
+
+## Source-Backed Context
+- DraftKings publicly positions Responsible Gaming as a core operational priority and ongoing investment area:
+  - https://www.draftkings.com/responsible-gaming
+  - https://www.draftkings.com/draftkings-renews-state-council-funding-program-and-expands-responsible-gaming-initiatives
+  - https://www.draftkings.com/lori-kalani-to-join-draftkings-as-first-chief-responsible-gaming-officer
+- DraftKings has also published product/technology direction indicating prioritization of advanced live-betting systems and AI-driven pricing capabilities:
+  - https://www.draftkings.com/draftkings-reaches-agreement-to-acquire-simplebet-to-further-enhance-live-betting-offering
+  - https://www.draftkings.com/draftkings-and-kindbridge-behavioral-health-expand-program
+- These sources inform project direction only. They do not prove DraftKings internal architecture, model stack, or proprietary implementation details.
+
+## Project Assumptions
+> **Assumption (explicit):** This project includes a neuro-signal component inspired by public market reporting and industry tooling (for example, Gamalyze-style concepts).  
+> This repository does **not** assert DraftKings-official implementation details beyond the cited DraftKings-owned sources.
+
+## Why This Matters For Analyst Work
+I use LLMs to reduce mechanical work (query drafting, contextual lookup patterns) so analysis time goes to evidence quality, contradiction checks, and intervention rationale.
+
+This repo is intentionally designed so decisions are inspectable:
+- Query history is logged.
+- Prompt route + response history is logged.
+- Trigger checks are logged.
+- Analyst notes and nudges are logged.
+
+## Core Capabilities
+### 1) Evidence Workflow
+- Draft SQL with `/api/ai/query-draft` or `/api/ai/router`.
+- Validate Snowflake-compatible syntax.
+- Execute read-only SQL through `/api/sql/execute`.
+- Store result previews and summaries in `rg_query_log`.
+
+### 2) AI Governance
+- AI never auto-submits case outcomes.
+- Analyst remains final approver for notes, nudges, and actions.
+- Prompt logs capture route type and selected tool.
+
+### 3) Trigger Checks
+- State-specific checks run via `POST /api/cases/trigger-check/{player_id}`.
+- Checks are cached unless forced; results are persisted for audit.
+
+### 4) Static vs Live Separation
+- `VITE_DATA_MODE=api`: frontend reads backend endpoints.
+- `VITE_DATA_MODE=static`: frontend reads `frontend/public/demo/*` fixtures.
+- Static mode is read-only (except local replay behavior in browser state).
 
 ## Quick Start
+### Live Mode
 ```bash
-# 1. Review project context
-cat CLAUDE.md
+pip install -r requirements.txt
+python scripts/seed_demo_db.py --completed 20 --in-progress 2
 
-# 2. Start Claude Code
-claude
+# Terminal 1
+cd backend && uvicorn main:app --reload --port 8000
 
-# 3. First command
-claude "Review CLAUDE.md and list first 3 development tasks"
+# Terminal 2
+cd frontend && npm install && npm run dev
 ```
 
-### Demo Data Seed (for hosting)
-Generate a demo DuckDB with a majority of Critical/High/Medium cases:
-```bash
-python scripts/seed_demo_db.py --players 400
-```
-
-Build deterministic static demo artifacts (includes legacy case docs such as
-`PLR_0055_NJ`, `PLR_0056_PA`, `PLR_0130_NJ` every run):
+### Static Mode
 ```bash
 ./scripts/build_static_demo.sh
+cd frontend && npm install && npm run dev:static
 ```
 
-## Project Structure
-```
-claude/          # Claude Code configuration
-├── skills/       # Domain knowledge (5 files)
-├── agents/       # Specialized personas (5 files)
-├── workflows/    # Multi-step procedures (3 files)
-└── context/      # Reference data (4 files)
+## Repo Layout
+- `backend/` FastAPI routers and DuckDB-backed services.
+- `frontend/` React client with static/live data mode switching.
+- `dbt_project/` staging/intermediate/mart transformations.
+- `scripts/` seeding, export, and demo build automation.
+- `docs/` technical and workflow documentation.
 
-dbt_project/      # Data transformation
-ai_services/      # LLM integration
-backend/          # FastAPI REST API
-frontend/         # React dashboard
-tests/            # Testing
-docs/             # Documentation
-```
+## Limitations (Deliberate and Explicit)
+- All player data is synthetic.
+- Synthetic distributions can introduce bias and do not fully reproduce real player randomness.
+- Regulatory and external context routes are prompt-based helpers, not a production legal/event knowledge platform.
+- No live ingestion of news, social, or schedule feeds in current implementation.
 
-## Tech Stack
-- Snowflake (target) + DuckDB (dev) + dbt + Python + FastAPI + React + OpenAI API
+## What I Would Build Next
+- Retrieval-backed regulatory assistant using internal policy and legal artifacts.
+- Event-aware context enrichment (sports schedules, media/news signals).
+- Governance handoff flow for legal/compliance approval on high-impact interventions.
 
-## Recruiter Summary
-See `docs/PORTFOLIO_WRITEUP.md` for a concise, recruiter-ready overview of the project.
-
-## Key Features
-- Persisted analyst queue with lifecycle tracking (Not Started → In Progress → Submitted)
-- Full Case File workbench with HITL notes, SQL evidence, and AI assist transparency
-- Read-only SQL execution with logging + Snowflake-safe guardrails
-- Regulatory trigger checks (MA/NJ/PA) logged as deterministic SQL evidence
-- Manager-grade Analytics dashboard (throughput, rigor, compliance signals)
-- DraftKings-authentic tech stack + responsible AI framing
-
-## Documentation
-- CLAUDE.md - Project overview
-- claude/skills/ - Domain expertise
-- claude/agents/ - Specialized tasks
-- claude/workflows/ - Step-by-step procedures
-- docs/HITL_REVIEW.md - Completed analyst review with SQL queries
-- docs/WEEK9_REPORT.md - Live integration + analytics + SQL workflow updates
-- docs/PORTFOLIO_WRITEUP.md - Recruiter-ready project summary
-- docs/TECHNICAL_DEEP_DIVE.md - Full technical rationale + AI workflow design
-
-## Portfolio Assets
-Add your final assets here when ready:
-- Live demo link
-- Walkthrough video (2–3 min)
-- Sample PDF report
+## Additional Docs
+- `docs/TECHNICAL_DEEP_DIVE.md`
+- `docs/LLM_INTEGRATION.md`
+- `docs/PROD_PARITY_CHECKLIST.md`
+- `docs/case_reviews/README.md`

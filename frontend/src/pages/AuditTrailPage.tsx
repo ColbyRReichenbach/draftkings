@@ -1,11 +1,13 @@
-import { useMemo, useState } from 'react';
+import { Suspense, lazy, useMemo, useState } from 'react';
 import { AuditTrailTable } from '../components/AuditTrailTable';
 import { useAuditTrail } from '../hooks/useAuditTrail';
 import { useCaseStatuses } from '../hooks/useCaseTimeline';
 import { useRiskCases } from '../hooks/useRiskCases';
 import { CaseStatus } from '../types/risk';
 import { useUiStore } from '../state/useUiStore';
-import { CaseFilePage } from './CaseFilePage';
+const CaseFilePage = lazy(() =>
+  import('./CaseFilePage').then((module) => ({ default: module.CaseFilePage }))
+);
 
 export const AuditTrailPage = () => {
   const { data: entries } = useAuditTrail();
@@ -80,11 +82,19 @@ export const AuditTrailPage = () => {
 
   if (selectedEntry && selectedEntry.risk_category !== 'LOW') {
     return (
-      <CaseFilePage
-        entry={selectedEntry}
-        status={selectedEntry.case_status}
-        onBack={() => setActiveAuditPlayerId(null)}
-      />
+      <Suspense
+        fallback={
+          <div className="glass-panel rounded-2xl p-6 text-slate-400">
+            Loading case file...
+          </div>
+        }
+      >
+        <CaseFilePage
+          entry={selectedEntry}
+          status={selectedEntry.case_status}
+          onBack={() => setActiveAuditPlayerId(null)}
+        />
+      </Suspense>
     );
   }
 

@@ -20,7 +20,7 @@ models:
     meta:
       owner: "colby@draftkings.com"
       sla: "<2 hours"
-      business_logic_source: "claude/context/business_logic.md"
+      business_logic_source: "docs/ANALYST_PLAYBOOK.md"
       depends_on:
         - stg_bet_logs
         - stg_player_profiles
@@ -109,7 +109,7 @@ models:
     meta:
       owner: "colby@draftkings.com"
       sla: "<2 hours"
-      business_logic_source: "claude/context/business_logic.md"
+      business_logic_source: "docs/ANALYST_PLAYBOOK.md"
       depends_on:
         - stg_bet_logs
         - stg_player_profiles
@@ -216,7 +216,7 @@ models:
     meta:
       owner: "colby@draftkings.com"
       sla: "<2 hours"
-      business_logic_source: "claude/context/business_logic.md"
+      business_logic_source: "docs/ANALYST_PLAYBOOK.md"
       depends_on:
         - stg_gamalyze_scores
         - stg_player_profiles

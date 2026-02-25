@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import {
   AuditEntry,
   CaseStatus,
@@ -383,6 +381,10 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
   };
 
   const handleExportPdf = async () => {
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable')
+    ]);
     const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();

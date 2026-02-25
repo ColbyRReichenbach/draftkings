@@ -1,4 +1,4 @@
-# LLM Integration (Week 5+)
+# LLM Integration
 
 ## Overview
 OpenAI-first LLM integration for semantic risk explanations and compliant customer nudges.

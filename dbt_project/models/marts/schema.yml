@@ -6,7 +6,7 @@ models:
       Composite responsible gaming risk scores for analyst triage.
 
       Business Logic:
-      - Component scores normalized using thresholds in claude/context/business_logic.md
+      - Component scores normalized using thresholds in docs/ANALYST_PLAYBOOK.md
       - Weights (v1.0): loss_chase 0.30, bet_escalation 0.25,
         market_drift 0.15, temporal_risk 0.10, gamalyze 0.20
       - Missing components imputed using population medians
@@ -17,7 +17,7 @@ models:
     meta:
       owner: "colby@draftkings.com"
       sla: "<2 hours"
-      business_logic_source: "claude/context/business_logic.md"
+      business_logic_source: "docs/ANALYST_PLAYBOOK.md"
       depends_on:
         - int_loss_chasing_indicators
         - int_market_drift_indicators
@@ -112,7 +112,7 @@ models:
     meta:
       owner: "colby@draftkings.com"
       sla: "<2 hours"
-      business_logic_source: "claude/context/business_logic.md"
+      business_logic_source: "docs/ANALYST_PLAYBOOK.md"
       depends_on:
         - rg_risk_scores
         - stg_player_profiles
@@ -197,7 +197,7 @@ models:
     meta:
       owner: "colby@draftkings.com"
       sla: "<2 hours"
-      business_logic_source: "claude/context/business_logic.md"
+      business_logic_source: "docs/ANALYST_PLAYBOOK.md"
       depends_on:
         - rg_risk_scores
 

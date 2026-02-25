@@ -14,7 +14,7 @@
   - int_gamalyze_composite
 
   Business Logic:
-  - Component normalization thresholds from claude/context/business_logic.md
+  - Component normalization thresholds from docs/ANALYST_PLAYBOOK.md
   - Weights (v1.0): loss_chase 0.30, bet_escalation 0.25, market_drift 0.15,
     temporal_risk 0.10, gamalyze 0.20
   - Missing components imputed with population median
