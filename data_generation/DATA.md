@@ -246,7 +246,7 @@ pip install -r requirements.txt
 **Validation tests failing**
 - For small samples (<1000 players), checks may fail due to sampling variance.
 - Tier 3/4 checks are advisory and may fail at 10K depending on tuning.
-- See `docs/DATA_GENERATION_METHODOLOGY.md` for current limitations.
+- See this document's "Validation" and "Troubleshooting" sections for current limitations.
 
 **Slow generation**
 - Use `--n-players 100` for faster testing
@@ -280,7 +280,7 @@ Internal portfolio project - not for production use.
 
 ## Contact
 
-For questions about data generation methodology, see `docs/DATA_GENERATION_METHODOLOGY.md`.
+For questions about data generation methodology, see this `data_generation/DATA.md` guide.
 
 ---
 

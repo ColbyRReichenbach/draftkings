@@ -1,15 +1,21 @@
-# DK Sentinel
+<div align="center">
+  <h1>DK Sentinel</h1>
 
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)
-![DuckDB](https://img.shields.io/badge/DuckDB-Analytics-FFF000?logo=duckdb&logoColor=000)
-![dbt](https://img.shields.io/badge/dbt-Transformations-FF694B?logo=dbt&logoColor=white)
-![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=000)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
-![OpenAI](https://img.shields.io/badge/OpenAI-LLM_Assist-412991?logo=openai&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-Pytest%20%7C%20Vitest-6E9F18)
+  <p>
+    <img src="https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white" alt="Python" />
+    <img src="https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
+    <img src="https://img.shields.io/badge/DuckDB-Analytics-FFF000?logo=duckdb&logoColor=000" alt="DuckDB" />
+    <img src="https://img.shields.io/badge/dbt-Transformations-FF694B?logo=dbt&logoColor=white" alt="dbt" />
+    <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=000" alt="React" />
+    <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/OpenAI-LLM_Assist-412991?logo=openai&logoColor=white" alt="OpenAI" />
+    <img src="https://img.shields.io/badge/Tests-Pytest%20%7C%20Vitest-6E9F18" alt="Tests" />
+  </p>
 
-I built this project to demonstrate how I operate as a modern Responsible Gaming analyst: SQL-first investigations, auditable AI assistance, and strict human-in-the-loop decision ownership.
+  <p>
+    I built this project to demonstrate how I operate as a modern Responsible Gaming analyst: SQL-first investigations, auditable AI assistance, and strict human-in-the-loop decision ownership.
+  </p>
+</div>
 
 ## Executive Summary
 - End-to-end analyst workflow: queue -> case detail -> case file -> submission.
@@ -109,6 +115,5 @@ cd frontend && npm install && npm run dev:static
 
 ## Additional Docs
 - `docs/TECHNICAL_DEEP_DIVE.md`
-- `docs/LLM_INTEGRATION.md`
-- `docs/PROD_PARITY_CHECKLIST.md`
 - `docs/case_reviews/README.md`
+- `data_generation/DATA.md`

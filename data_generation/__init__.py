@@ -13,7 +13,7 @@ Key features:
 Usage:
     python -m data_generation --output-dir data/ --validate
 
-For more information, see data_generation/README.md
+For more information, see data_generation/DATA.md
 """
 
 __version__ = "1.0.0"
