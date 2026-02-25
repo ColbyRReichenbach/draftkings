@@ -4,10 +4,11 @@ import { SidebarNav } from './SidebarNav';
 interface LayoutShellProps {
   title: string;
   subtitle: string;
+  mode?: 'static' | 'api';
   children: ReactNode;
 }
 
-export const LayoutShell = ({ title, subtitle, children }: LayoutShellProps) => (
+export const LayoutShell = ({ title, subtitle, mode = 'api', children }: LayoutShellProps) => (
   <div className="flex min-h-screen w-full bg-dk-black text-slate-200 font-body">
     {/* Sidebar Navigation */}
     <SidebarNav />
@@ -30,6 +31,22 @@ export const LayoutShell = ({ title, subtitle, children }: LayoutShellProps) => 
 
         {/* Right side actions or status indicators could go here */}
         <div className="flex items-center gap-4">
+          <div
+            className={`flex items-center gap-2 rounded px-3 py-1.5 border ${
+              mode === 'static'
+                ? 'bg-amber-950/30 border-amber-700/60'
+                : 'bg-emerald-950/30 border-emerald-700/60'
+            }`}
+          >
+            <div
+              className={`h-2 w-2 rounded-full ${
+                mode === 'static' ? 'bg-amber-400' : 'bg-emerald-400'
+              }`}
+            />
+            <span className="text-[11px] font-mono font-medium text-slate-200 uppercase">
+              {mode === 'static' ? 'STATIC FIXTURE MODE' : 'LIVE API MODE'}
+            </span>
+          </div>
           <div className="flex items-center gap-2 rounded bg-dk-surface px-3 py-1.5 border border-dk-border">
             <div className="h-2 w-2 rounded-full bg-dk-green animate-pulse" />
             <span className="text-xs font-mono font-medium text-slate-300">SYSTEM NORMAL</span>

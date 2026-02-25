@@ -20,6 +20,12 @@ Generate a demo DuckDB with a majority of Critical/High/Medium cases:
 python scripts/seed_demo_db.py --players 400
 ```
 
+Build deterministic static demo artifacts (includes legacy case docs such as
+`PLR_0055_NJ`, `PLR_0056_PA`, `PLR_0130_NJ` every run):
+```bash
+./scripts/build_static_demo.sh
+```
+
 ## Project Structure
 ```
 claude/          # Claude Code configuration

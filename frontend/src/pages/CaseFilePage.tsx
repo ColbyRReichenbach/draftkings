@@ -1,7 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { AuditEntry, CaseStatus, SqlExecuteResponse, TriggerCheckResult } from '../types/risk';
+import {
+  AuditEntry,
+  CaseStatus,
+  CaseTimelineEntry,
+  SqlExecuteResponse,
+  TriggerCheckResult
+} from '../types/risk';
 import { useCaseDetailByPlayer } from '../hooks/useRiskCases';
 import {
   useAnalystNotes,
@@ -21,6 +27,8 @@ import { NudgePreview } from '../components/NudgePreview';
 import { InfoBadge } from '../components/InfoBadge';
 import { RISK_STYLES } from '../styles/theme';
 import { useQueryClient } from '@tanstack/react-query';
+import { dataMode } from '../api/httpClient';
+import { appendReplayTimelineEntry, getReplayTimelineEntries } from '../state/staticReplayTimeline';
 
 interface CaseFilePageProps {
   entry: AuditEntry;
@@ -84,6 +92,7 @@ const KPI_TOOLTIPS: Record<string, string> = {
 };
 
 export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
+  const isStaticMode = dataMode === 'static';
   const { data: detail } = useCaseDetailByPlayer(entry.player_id);
   const notesQuery = useAnalystNotes(entry.player_id);
   const draftNotesQuery = useDraftAnalystNotes(entry.player_id);
@@ -117,6 +126,8 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
   const [openTriggerSql, setOpenTriggerSql] = useState<Record<string, boolean>>({});
   const [nudgeDraft, setNudgeDraft] = useState('');
   const [nudgeFinal, setNudgeFinal] = useState('');
+  const [replayTimeline, setReplayTimeline] = useState<CaseTimelineEntry[]>([]);
+  const replayLoggedRef = useRef(false);
 
   useEffect(() => {
     if (notesQuery.data) {
@@ -152,6 +163,41 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
       setNudgeFinal(nudgeLog.data.final_nudge);
     }
   }, [nudgeLog.data]);
+
+  useEffect(() => {
+    if (!isStaticMode) {
+      return;
+    }
+    setReplayTimeline(getReplayTimelineEntries(entry.player_id));
+    replayLoggedRef.current = false;
+  }, [entry.player_id, isStaticMode]);
+
+  useEffect(() => {
+    if (!isStaticMode || replayLoggedRef.current || !triggerChecks.data?.length) {
+      return;
+    }
+    const detailText = triggerChecks.data
+      .map((check) => `${check.state}: ${check.triggered ? 'Triggered' : 'Not triggered'} (${check.reason})`)
+      .join(' | ');
+    const replayEntry: CaseTimelineEntry = {
+      event_type: 'Auto Trigger Check (Replayed)',
+      event_detail: detailText,
+      created_at: new Date().toISOString(),
+      source: 'static_replay',
+      ephemeral: true
+    };
+    appendReplayTimelineEntry(entry.player_id, replayEntry);
+    setReplayTimeline(getReplayTimelineEntries(entry.player_id));
+    replayLoggedRef.current = true;
+  }, [entry.player_id, isStaticMode, triggerChecks.data]);
+
+  const mergedTimeline = useMemo(() => {
+    const backend = timeline.data ?? [];
+    const replay = isStaticMode ? replayTimeline : [];
+    return [...replay, ...backend].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [isStaticMode, replayTimeline, timeline.data]);
 
   const isInProgress = status === 'IN_PROGRESS';
   const isSubmitted = status === 'SUBMITTED';
@@ -705,7 +751,7 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
     cursorY = ensurePage(90, cursorY, pageNum);
     cursorY = addSectionTitle('Evidence & Log Summary', cursorY);
     const sqlCount = queryLogs.data?.length ?? 0;
-    const timelineCount = timeline.data?.length ?? 0;
+    const timelineCount = mergedTimeline.length;
     const summaryLines = [
       `SQL evidence logged (${sqlCount} ${sqlCount === 1 ? 'query' : 'queries'}). See Appendix for details.`,
       `Timeline entries logged (${timelineCount}). See Appendix for full timeline.`
@@ -819,11 +865,11 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
     // ── Case Timeline ────────────────────────────────────────────────
     cursorY = ensurePage(80, cursorY + 10, pageNum, appendixSubtitle);
     cursorY = addSectionTitle('Case Timeline', cursorY);
-    if (timeline.data?.length) {
+    if (mergedTimeline.length) {
       autoTable(pdf, {
         startY: cursorY,
         head: [['Event', 'Detail', 'Timestamp']],
-        body: (timeline.data ?? []).map((item) => [
+        body: mergedTimeline.map((item) => [
           item.event_type,
           item.event_detail,
           formatTimestamp(item.created_at)
@@ -1507,20 +1553,27 @@ export const CaseFilePage = ({ entry, status, onBack }: CaseFilePageProps) => {
 
         <div className="glass-panel panel-sheen rounded-2xl p-5">
           <p className="border-l-[3px] border-[#53B848] pl-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Timeline</p>
-          {timeline.data?.length ? (
+          {mergedTimeline.length ? (
             <div className="mt-3 space-y-0">
-              {timeline.data.map((item, idx) => (
+              {mergedTimeline.map((item, idx) => (
                 <div key={`${item.event_type}-${item.created_at}`} className="flex gap-3">
                   {/* vertical connector */}
                   <div className="flex flex-col items-center">
                     <div className="mt-1 h-2.5 w-2.5 rounded-full bg-[#53B848]" />
-                    {idx < timeline.data!.length - 1 && (
+                    {idx < mergedTimeline.length - 1 && (
                       <div className="w-0.5 flex-1 bg-slate-700" style={{ minHeight: '32px' }} />
                     )}
                   </div>
                   {/* content */}
                   <div className="pb-4 text-sm text-slate-300">
-                    <p className="text-xs font-semibold text-slate-300">{item.event_type}</p>
+                    <p className="text-xs font-semibold text-slate-300">
+                      {item.event_type}
+                      {item.source === 'static_replay' ? (
+                        <span className="ml-2 rounded-full border border-amber-500/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-300">
+                          static replay
+                        </span>
+                      ) : null}
+                    </p>
                     <p>{item.event_detail}</p>
                     <p className="text-xs text-slate-500">
                       {new Date(item.created_at).toLocaleString()}

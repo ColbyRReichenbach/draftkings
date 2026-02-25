@@ -119,7 +119,7 @@ def _queued_count(db_path: str) -> int:
 def _safe_ratio(numerator: int, denominator: int) -> float:
     if denominator <= 0:
         return 0.0
-    return float(numerator) / float(denominator)
+    return min(1.0, float(numerator) / float(denominator))
 
 
 def _fetch_analytics_summary(db_path: str) -> AnalyticsSummary:
@@ -390,7 +390,10 @@ async def get_queue(limit: int = 200, db_path: str = Depends(get_db_path)) -> li
             q.assigned_at,
             COALESCE(r.composite_risk_score, 0.0) AS composite_risk_score,
             COALESCE(r.risk_category, 'LOW') AS risk_category,
-            COALESCE(r.calculated_at, q.assigned_at) AS calculated_at,
+            COALESCE(
+              CAST(r.calculated_at AS TIMESTAMP),
+              CAST(q.assigned_at AS TIMESTAMP)
+            ) AS calculated_at,
             COALESCE(r.loss_chase_score, 0.0) AS loss_chase_score,
             COALESCE(r.bet_escalation_score, 0.0) AS bet_escalation_score,
             COALESCE(r.market_drift_score, 0.0) AS market_drift_score,
