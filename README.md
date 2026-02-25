@@ -11,7 +11,7 @@
     <img src="https://img.shields.io/badge/OpenAI-LLM_Assist-412991?logo=openai&logoColor=white" alt="OpenAI" />
     <img src="https://img.shields.io/badge/Tests-Pytest%20%7C%20Vitest-6E9F18" alt="Tests" />
   </p>
-
+  
   <p>
     I built this project to demonstrate how I operate as a modern Responsible Gaming analyst: SQL-first investigations, auditable AI assistance, and strict human-in-the-loop decision ownership.
   </p>
@@ -118,10 +118,8 @@ cd frontend && npm install && npm run dev:static
 - `docs/case_reviews/README.md`
 - `data_generation/DATA.md`
 
-## About
-
-Built by **Colby Reichenbach**
+## Built by **Colby Reichenbach**
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/colby-reichenbach/)
-[![Portfolio](https://img.shields.io/badge/Portfolio-Visit-000000?style=flat-square&logo=githubpages&logoColor=white)](https://colbyrreichenbach.github.io/)
+[![Portfolio](https://img.shields.io/badge/Portfolio%20-%20Check%20Out%20My%20Work?style=flat-square&label=Check%20Out%20My%20Work&color=4B9CD3)](https://colbyrreichenbach.github.io/)
 [![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/ColbyRReichenbach)
