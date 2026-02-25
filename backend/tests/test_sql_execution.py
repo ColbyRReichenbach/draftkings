@@ -126,3 +126,84 @@ def test_trigger_check_cache_and_force(client):
     ).fetchone()[0]
     conn.close()
     assert forced_count == 2
+
+
+def test_trigger_check_nj_triggered(client):
+    db_path = os.environ["DUCKDB_PATH"]
+    player_id = "PLR_2222_NJ"
+    _seed_trigger_tables(db_path, player_id, "NJ")
+
+    conn = duckdb.connect(db_path)
+    now = datetime.utcnow()
+    conn.execute(
+        "INSERT INTO RG_RISK_SCORES VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (player_id, 0.9, "CRITICAL", now - timedelta(days=3), 0.8, 0.8, 0.8, 0.8, 0.8),
+    )
+    conn.execute(
+        "INSERT INTO RG_RISK_SCORES VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (player_id, 0.85, "HIGH", now - timedelta(days=1), 0.7, 0.7, 0.7, 0.7, 0.7),
+    )
+    conn.close()
+
+    response = client.post(f"/api/cases/trigger-check/{player_id}")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["state"] == "NJ"
+    assert data[0]["triggered"] is True
+
+
+def test_trigger_check_pa_not_triggered_default(client):
+    db_path = os.environ["DUCKDB_PATH"]
+    player_id = "PLR_2333_PA"
+    _seed_trigger_tables(db_path, player_id, "PA")
+
+    response = client.post(f"/api/cases/trigger-check/{player_id}")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["state"] == "PA"
+    assert data[0]["triggered"] is False
+    assert "Self-exclusion history not available" in data[0]["reason"]
+
+
+def test_sql_execute_unknown_column_returns_hint(client):
+    db_path = os.environ["DUCKDB_PATH"]
+    player_id = "PLR_2444_MA"
+    _seed_trigger_tables(db_path, player_id, "MA")
+
+    response = client.post(
+        "/api/sql/execute",
+        json={
+            "player_id": player_id,
+            "sql_text": "SELECT nonexistent_col FROM STAGING.STG_BET_LOGS",
+            "purpose": "unknown column test",
+        },
+    )
+    assert response.status_code == 400
+    assert "Unknown column" in response.text
+    assert "Candidate bindings" in response.text or "Did you mean" in response.text
+
+
+def test_sql_execute_applies_result_row_cap(client):
+    db_path = os.environ["DUCKDB_PATH"]
+    player_id = "PLR_2555_MA"
+    _seed_trigger_tables(db_path, player_id, "MA")
+
+    conn = duckdb.connect(db_path)
+    now = datetime.utcnow()
+    rows = [(player_id, float(i), now - timedelta(minutes=i)) for i in range(250)]
+    conn.executemany("INSERT INTO STG_BET_LOGS VALUES (?, ?, ?)", rows)
+    conn.close()
+
+    response = client.post(
+        "/api/sql/execute",
+        json={
+            "player_id": player_id,
+            "sql_text": f"SELECT player_id, bet_amount FROM STAGING.STG_BET_LOGS WHERE player_id = '{player_id}'",
+            "purpose": "row cap test",
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["row_count"] == 200
