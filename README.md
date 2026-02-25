@@ -19,6 +19,27 @@ I built this project to demonstrate how I operate as a modern Responsible Gaming
 - MA/NJ/PA trigger checks with reproducible logs.
 - Dual delivery model: live API mode and static fixture mode.
 
+## Why I Chose This Infrastructure
+- **DuckDB** for fast local iteration and deterministic, file-based reproducibility during development.
+- **Snowflake-style SQL constraints** to mirror production warehouse query expectations while running locally.
+- **FastAPI** to expose clear, testable analyst workflow interfaces (queue, case, AI, SQL, interventions).
+- **Routed LLM assist** to reduce repetitive SQL drafting and context switching while preserving analyst ownership.
+- **Static + live separation** to support reliable demos without losing production-like API workflow behavior.
+
+## Source-Backed Context
+- DraftKings publicly positions Responsible Gaming as a core operational priority and ongoing investment area:
+  - https://www.draftkings.com/responsible-gaming
+  - https://www.draftkings.com/draftkings-renews-state-council-funding-program-and-expands-responsible-gaming-initiatives
+  - https://www.draftkings.com/lori-kalani-to-join-draftkings-as-first-chief-responsible-gaming-officer
+- DraftKings has also published product/technology direction indicating prioritization of advanced live-betting systems and AI-driven pricing capabilities:
+  - https://www.draftkings.com/draftkings-reaches-agreement-to-acquire-simplebet-to-further-enhance-live-betting-offering
+  - https://www.draftkings.com/draftkings-and-kindbridge-behavioral-health-expand-program
+- These sources inform project direction only. They do not prove DraftKings internal architecture, model stack, or proprietary implementation details.
+
+## Project Assumptions
+> **Assumption (explicit):** This project includes a neuro-signal component inspired by public market reporting and industry tooling (for example, Gamalyze-style concepts).  
+> This repository does **not** assert DraftKings-official implementation details beyond the cited DraftKings-owned sources.
+
 ## Why This Matters For Analyst Work
 I use LLMs to reduce mechanical work (query drafting, contextual lookup patterns) so analysis time goes to evidence quality, contradiction checks, and intervention rationale.
 

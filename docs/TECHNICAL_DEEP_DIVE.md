@@ -8,6 +8,52 @@
 ## Objective
 This system is built to simulate analyst-grade responsible gaming operations with auditable evidence and constrained AI assistance.
 
+## Infrastructure Decision Record
+### DuckDB Local Runtime
+- **Decision:** Use DuckDB as the local analytical/runtime store.
+- **Why:** Fast setup, strong SQL support, deterministic local reproducibility, and easy sharing via a single DB artifact.
+- **Tradeoff:** Does not provide enterprise warehouse controls out of the box (for example RBAC layers and managed scaling).
+
+### Snowflake Syntax Enforcement
+- **Decision:** Keep SQL drafting/execution Snowflake-oriented with explicit syntax validation.
+- **Why:** Align analyst query habits with target warehouse semantics while still executing locally in DuckDB.
+- **Tradeoff:** Some dialect differences require rewrite/normalization logic before local execution.
+
+### Prompt Router Taxonomy
+- **Decision:** Route prompts into `SQL_DRAFT`, `REGULATORY_CONTEXT`, `EXTERNAL_CONTEXT`, `GENERAL_ANALYSIS`.
+- **Why:** Improve transparency, reduce misuse of tools, and keep logs auditable by intent.
+- **Tradeoff:** Keyword routing is deterministic but less adaptive than a retrieval/classifier-based router.
+
+### Read-Only SQL Guardrails
+- **Decision:** Enforce `SELECT`-only behavior, block prohibited statements, block PII fields, and cap result size.
+- **Why:** Preserve analyst safety/governance and avoid accidental data mutation or sensitive-field exposure.
+- **Tradeoff:** Analysts may need extra query iterations when blocked by strict controls.
+
+### Static + Live Separation
+- **Decision:** Implement `VITE_DATA_MODE` split between API-backed and fixture-backed modes.
+- **Why:** Support reliable demos without backend dependency while preserving a realistic live workflow path.
+- **Tradeoff:** Static mode can drift from live behavior unless fixture export and parity checks stay disciplined.
+
+## Production-Mirroring Choices
+- API-driven workflow mirrors analyst operations through explicit endpoints for queue triage, case workbench actions, and submission.
+- Auditability is modeled via persisted logs (`rg_query_log`, `rg_llm_prompt_log`, `rg_trigger_check_log`, status/note/nudge logs).
+- Trigger checks run through deterministic SQL logic and cache behavior similar to controlled production checks.
+- SQL governance is enforced via read-only execution constraints plus Snowflake-style syntax validation.
+
+## Source-Backed Context
+- DraftKings Responsible Gaming commitments and framing:
+  - https://www.draftkings.com/responsible-gaming
+  - https://www.draftkings.com/draftkings-renews-state-council-funding-program-and-expands-responsible-gaming-initiatives
+  - https://www.draftkings.com/lori-kalani-to-join-draftkings-as-first-chief-responsible-gaming-officer
+- DraftKings product/technology direction relevant to this portfolio architecture:
+  - https://www.draftkings.com/draftkings-reaches-agreement-to-acquire-simplebet-to-further-enhance-live-betting-offering
+  - https://www.draftkings.com/draftkings-and-kindbridge-behavioral-health-expand-program
+- These sources are used as directional context, not proof of proprietary internal implementation.
+
+## Project Assumptions
+> **Assumption (explicit):** The neuro-signal portion of this project is inspired by publicly discussed industry approaches (including Gamalyze-style concepts), and is modeled here as a portfolio design choice.  
+> This document does **not** claim confirmed DraftKings proprietary model implementation beyond the cited DraftKings-owned sources.
+
 ## Architecture Snapshot
 - Frontend: React + TypeScript + Vite.
 - API: FastAPI app with dedicated routers (`/api`, `/api/cases`, `/api/ai`, `/api/sql`, `/api/interventions`).
@@ -117,7 +163,9 @@ cd frontend && npm test
 - Keyword-based routing is deterministic and transparent, but less adaptive than retrieval or classifier-based routing.
 - Static mode improves demo reliability but cannot substitute for full backend integration testing.
 
-## Constraints and Future Engineering Work
-- Synthetic data does not fully model production behavioral entropy.
-- External/regulatory context is currently prompt-driven, not retrieval-backed.
-- Next iteration should add RAG over policy docs and event feeds, plus route confidence scoring.
+## Known Gaps vs Production
+- Synthetic data does not fully model real player behavioral entropy and can introduce bias.
+- No enterprise IAM/RBAC layer is implemented in this local portfolio stack.
+- No retrieval-backed legal/policy knowledge system is currently implemented.
+- No live event/news/social ingestion pipeline is currently implemented.
+- External/regulatory context routes are prompt-driven helper flows, not production legal knowledge infrastructure.
