@@ -1,4 +1,5 @@
 <div align="center">
+
   # DK Sentinel
 
 **Modern analytics full stack project with functional frontend and professional workflow**
