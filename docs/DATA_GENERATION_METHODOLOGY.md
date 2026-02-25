@@ -25,7 +25,7 @@ because end-to-end scoring produced too few HIGH/CRITICAL flags at the documente
 - Stronger market tier drift (toward niche markets)
 
 **Why**: The state-machine implementation attenuates some latent-factor effects, so severity needed to be
-raised to consistently cross the risk thresholds defined in `claude/context/business_logic.md`.
+raised to consistently cross the risk thresholds defined in `docs/ANALYST_PLAYBOOK.md`.
 
 ### Additional Tuning Note (2026-02-03)
 We introduced cohort-specific win rates to increase loss-chasing ratios **without** changing any

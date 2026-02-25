@@ -1,73 +1,46 @@
-# DK SENTINEL: Responsible Gaming Intelligence System
+# DK Sentinel: Responsible Gaming Intelligence System
 
-Portfolio project for DraftKings Analyst II, RG Analytics role (Job ID: jr13280).
+Portfolio project for Responsible Gaming analytics workflows: queue triage, case audits, SQL evidence logging, AI-assisted analysis, and state-specific trigger checks.
 
 ## Quick Start
+
+### Live mode (API-backed)
 ```bash
-# 1. Review project context
-cat CLAUDE.md
+pip install -r requirements.txt
+python scripts/seed_demo_db.py --completed 20 --in-progress 2
 
-# 2. Start Claude Code
-claude
+# terminal 1
+cd backend && uvicorn main:app --reload --port 8000
 
-# 3. First command
-claude "Review CLAUDE.md and list first 3 development tasks"
+# terminal 2
+cd frontend && npm install && npm run dev
 ```
 
-### Demo Data Seed (for hosting)
-Generate a demo DuckDB with a majority of Critical/High/Medium cases:
-```bash
-python scripts/seed_demo_db.py --players 400
-```
-
-Build deterministic static demo artifacts (includes legacy case docs such as
-`PLR_0055_NJ`, `PLR_0056_PA`, `PLR_0130_NJ` every run):
+### Static mode (pre-exported fixtures)
 ```bash
 ./scripts/build_static_demo.sh
+cd frontend && npm install && npm run dev:static
 ```
 
 ## Project Structure
-```
-claude/          # Claude Code configuration
-├── skills/       # Domain knowledge (5 files)
-├── agents/       # Specialized personas (5 files)
-├── workflows/    # Multi-step procedures (3 files)
-└── context/      # Reference data (4 files)
-
-dbt_project/      # Data transformation
-ai_services/      # LLM integration
-backend/          # FastAPI REST API
-frontend/         # React dashboard
-tests/            # Testing
-docs/             # Documentation
-```
-
-## Tech Stack
-- Snowflake (target) + DuckDB (dev) + dbt + Python + FastAPI + React + OpenAI API
-
-## Recruiter Summary
-See `docs/PORTFOLIO_WRITEUP.md` for a concise, recruiter-ready overview of the project.
+- `dbt_project/` data transformations
+- `backend/` FastAPI service layer
+- `frontend/` React dashboard
+- `scripts/` seed/export/audit automation
+- `tests/` backend and integration tests
+- `docs/` analyst and technical documentation
 
 ## Key Features
-- Persisted analyst queue with lifecycle tracking (Not Started → In Progress → Submitted)
-- Full Case File workbench with HITL notes, SQL evidence, and AI assist transparency
-- Read-only SQL execution with logging + Snowflake-safe guardrails
-- Regulatory trigger checks (MA/NJ/PA) logged as deterministic SQL evidence
-- Manager-grade Analytics dashboard (throughput, rigor, compliance signals)
-- DraftKings-authentic tech stack + responsible AI framing
+- Analyst queue with lifecycle tracking (`NOT_STARTED` -> `IN_PROGRESS` -> `SUBMITTED`)
+- Case File workbench with SQL evidence and AI transparency logs
+- Read-only SQL drafting/execution safeguards
+- MA/NJ/PA trigger checks with deterministic audit records
+- Static and live demo modes with explicit data-source separation
 
 ## Documentation
-- CLAUDE.md - Project overview
-- claude/skills/ - Domain expertise
-- claude/agents/ - Specialized tasks
-- claude/workflows/ - Step-by-step procedures
-- docs/HITL_REVIEW.md - Completed analyst review with SQL queries
-- docs/WEEK9_REPORT.md - Live integration + analytics + SQL workflow updates
-- docs/PORTFOLIO_WRITEUP.md - Recruiter-ready project summary
-- docs/TECHNICAL_DEEP_DIVE.md - Full technical rationale + AI workflow design
-
-## Portfolio Assets
-Add your final assets here when ready:
-- Live demo link
-- Walkthrough video (2–3 min)
-- Sample PDF report
+- `docs/PORTFOLIO_WRITEUP.md`
+- `docs/TECHNICAL_DEEP_DIVE.md`
+- `docs/ANALYST_PLAYBOOK.md`
+- `docs/LLM_INTEGRATION.md`
+- `docs/PROD_PARITY_CHECKLIST.md`
+- `docs/case_reviews/README.md`
