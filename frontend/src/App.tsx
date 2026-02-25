@@ -1,11 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react';
 import { LayoutShell } from './components/LayoutShell';
-import { AuditTrailPage } from './pages/AuditTrailPage';
-import { AnalyticsPage } from './pages/AnalyticsPage';
-import { CaseDetailPage } from './pages/CaseDetailPage';
-import { QueuePage } from './pages/QueuePage';
 import { useUiStore } from './state/useUiStore';
 import { dataMode } from './api/httpClient';
+
+const QueuePage = lazy(() =>
+  import('./pages/QueuePage').then((module) => ({ default: module.QueuePage }))
+);
+const CaseDetailPage = lazy(() =>
+  import('./pages/CaseDetailPage').then((module) => ({ default: module.CaseDetailPage }))
+);
+const AnalyticsPage = lazy(() =>
+  import('./pages/AnalyticsPage').then((module) => ({ default: module.AnalyticsPage }))
+);
+const AuditTrailPage = lazy(() =>
+  import('./pages/AuditTrailPage').then((module) => ({ default: module.AuditTrailPage }))
+);
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ??
@@ -166,16 +175,6 @@ const App = () => {
   };
 
   const isBackendReady = backendStatus === 'ready';
-  const renderedTab = useMemo(() => {
-    if (!isBackendReady) {
-      return (
-        <div className="glass-panel rounded-3xl border border-slate-800 bg-slate-950/60 p-6 text-sm text-slate-300">
-          Waiting for the backend to finish waking up…
-        </div>
-      );
-    }
-    return renderTab();
-  }, [isBackendReady, activeTab]);
 
   return (
     <LayoutShell
@@ -183,7 +182,21 @@ const App = () => {
       subtitle="Prioritize high-risk cases, review evidence, and document interventions in one unified workflow."
       mode={isStaticMode ? 'static' : 'api'}
     >
-      {renderedTab}
+      {!isBackendReady ? (
+        <div className="glass-panel rounded-3xl border border-slate-800 bg-slate-950/60 p-6 text-sm text-slate-300">
+          Waiting for the backend to finish waking up…
+        </div>
+      ) : (
+        <Suspense
+          fallback={
+            <div className="glass-panel rounded-3xl border border-slate-800 bg-slate-950/60 p-6 text-sm text-slate-300">
+              Loading page…
+            </div>
+          }
+        >
+          {renderTab()}
+        </Suspense>
+      )}
       {!isStaticMode ? (
         <BackendWarmupOverlay
           status={backendStatus}
