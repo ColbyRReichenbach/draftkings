@@ -1,8 +1,10 @@
 <div align="center">
-  <h1>DK Sentinel</h1>
+  # DK Sentinel
 
-  <p>
-    <img src="https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white" alt="Python" />
+**Modern analytics full stack project with functional frontend and professional workflow**
+Modern analytics stack workflow showcased through a assumption based mock workflow of a Responsible Gaming analyst at DraftKings: SQL-first investigations, auditable AI assistance, and strict human-in-the-loop decision ownership.
+
+  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white" alt="Python" />
     <img src="https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
     <img src="https://img.shields.io/badge/DuckDB-Analytics-FFF000?logo=duckdb&logoColor=000" alt="DuckDB" />
     <img src="https://img.shields.io/badge/dbt-Transformations-FF694B?logo=dbt&logoColor=white" alt="dbt" />
@@ -10,11 +12,13 @@
     <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
     <img src="https://img.shields.io/badge/OpenAI-LLM_Assist-412991?logo=openai&logoColor=white" alt="OpenAI" />
     <img src="https://img.shields.io/badge/Tests-Pytest%20%7C%20Vitest-6E9F18" alt="Tests" />
-  </p>
-  
-  <p>
-    I built this project to demonstrate how I operate as a modern Responsible Gaming analyst: SQL-first investigations, auditable AI assistance, and strict human-in-the-loop decision ownership.
-  </p>
+
+by **Colby Reichenbach**
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/colby-reichenbach/)
+[![Portfolio](https://img.shields.io/badge/Portfolio%20-%20Check%20Out%20My%20Work?style=flat-square&label=Check%20Out%20My%20Work&color=4B9CD3)](https://colbyrreichenbach.github.io/)
+[![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/ColbyRReichenbach)
+
 </div>
 
 ## Executive Summary
