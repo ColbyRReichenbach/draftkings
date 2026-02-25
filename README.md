@@ -76,7 +76,6 @@ cd frontend && npm install && npm run dev:static
 ```
 
 ## Docs Map
-- `docs/PORTFOLIO_WRITEUP.md`
 - `docs/TECHNICAL_DEEP_DIVE.md`
 - `docs/ANALYST_PLAYBOOK.md`
 - `docs/LLM_INTEGRATION.md`
