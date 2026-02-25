@@ -58,3 +58,9 @@ vite.config.js
 # Portfolio artifacts (keep local)
 docs/case_reviews/
 docs/ANALYST_PLAYBOOK.md
+
+# Optional local-only test/workbench files (exclude if not needed in portfolio snapshots)
+tests/
+backend/tests/
+frontend/src/**/__tests__/
+frontend/src/state/__tests__/

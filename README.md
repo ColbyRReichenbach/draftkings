@@ -115,6 +115,5 @@ cd frontend && npm install && npm run dev:static
 
 ## Additional Docs
 - `docs/TECHNICAL_DEEP_DIVE.md`
-- `docs/LLM_INTEGRATION.md`
-- `docs/PROD_PARITY_CHECKLIST.md`
 - `docs/case_reviews/README.md`
+- `data_generation/DATA.md`
