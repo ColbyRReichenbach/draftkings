@@ -2,17 +2,17 @@
 
   # DK Sentinel
 
-**Modern analytics full stack project with functional frontend and professional workflow**
-Modern analytics stack workflow showcased through a assumption based mock workflow of a Responsible Gaming analyst at DraftKings: SQL-first investigations, auditable AI assistance, and strict human-in-the-loop decision ownership.
+<p> Modern analytics full stack project with functional frontend and professional workflow </p>
+<p>Modern analytics stack workflow showcased through a assumption based mock workflow of a Responsible Gaming analyst at DraftKings: SQL-first investigations, auditable AI assistance, and strict human-in-the-loop decision ownership.</p>
 
-  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white" alt="Python" />
-    <img src="https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
-    <img src="https://img.shields.io/badge/DuckDB-Analytics-FFF000?logo=duckdb&logoColor=000" alt="DuckDB" />
-    <img src="https://img.shields.io/badge/dbt-Transformations-FF694B?logo=dbt&logoColor=white" alt="dbt" />
-    <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=000" alt="React" />
-    <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
-    <img src="https://img.shields.io/badge/OpenAI-LLM_Assist-412991?logo=openai&logoColor=white" alt="OpenAI" />
-    <img src="https://img.shields.io/badge/Tests-Pytest%20%7C%20Vitest-6E9F18" alt="Tests" />
+<img src="https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white" alt="Python" />
+<img src="https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
+<img src="https://img.shields.io/badge/DuckDB-Analytics-FFF000?logo=duckdb&logoColor=000" alt="DuckDB" />
+<img src="https://img.shields.io/badge/dbt-Transformations-FF694B?logo=dbt&logoColor=white" alt="dbt" />
+<img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=000" alt="React" />
+<img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+<img src="https://img.shields.io/badge/OpenAI-LLM_Assist-412991?logo=openai&logoColor=white" alt="OpenAI" />
+<img src="https://img.shields.io/badge/Tests-Pytest%20%7C%20Vitest-6E9F18" alt="Tests" />
 
 by **Colby Reichenbach**
 
